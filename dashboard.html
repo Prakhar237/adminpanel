@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TAP24H Admin Dashboard</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <div class="dashboard-container">
+        <div class="sidebar">
+            <div class="logo">
+                <h2>TAP24H</h2>
+            </div>
+            <nav>
+                <ul>
+                    <li class="active"><a href="#dashboard"><i class="fas fa-chart-line"></i> Dashboard</a></li>
+                    <li><a href="#coupons"><i class="fas fa-ticket-alt"></i> Coupons Inventory</a></li>
+                    <li><a href="#reports"><i class="fas fa-file-alt"></i> User Reports</a></li>
+                    <li><a href="#rewards"><i class="fas fa-gift"></i> User Rewards</a></li>
+                    <li><a href="#approval"><i class="fas fa-check-circle"></i> Admin Approval</a></li>
+                </ul>
+            </nav>
+            <button class="sidebar-toggle" id="sidebarToggle">
+                <i class="fas fa-chevron-left"></i>
+            </button>
+        </div>
+        <div class="main-content">
+            <div class="header">
+                <h1>Dashboard</h1>
+                <div class="user-info">
+                    <span>Admin</span>
+                    <button id="logoutBtn">Logout</button>
+                </div>
+            </div>
+
+            <!-- Dashboard Section -->
+            <div class="content-section active" id="dashboard">
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <h4>Total Users</h4>
+                        <div class="value">0</div>
+                    </div>
+                    <div class="stat-card">
+                        <h4>Active Coupons</h4>
+                        <div class="value">0</div>
+                    </div>
+                    <div class="stat-card">
+                        <h4>Total Rewards</h4>
+                        <div class="value">0</div>
+                    </div>
+                </div>
+                <div class="data-table">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Connected Users</th>
+                                <th>Virtual Floor Number</th>
+                                <th>Country</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr class="user-row">
+                                <td>supabaseuser.com</td>
+                                <td>1</td>
+                                <td>database connection in progress</td>
+                                <td>
+                                    <button class="expand-btn" onclick="toggleUserDetails(this)">
+                                        <i class="fas fa-chevron-down"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                            <tr class="user-details-row" style="display: none;">
+                                <td colspan="4">
+                                    <div class="user-details-expanded">
+                                        <div class="details-grid">
+                                            <div class="detail-item">
+                                                <label>Signed Up:</label>
+                                                <span>xyz.com</span>
+                                            </div>
+                                            <div class="detail-item">
+                                                <label>Current Status:</label>
+                                                <span class="status-badge idle">Idle</span>
+                                            </div>
+                                            <div class="detail-item">
+                                                <label>Coupons Redeemed:</label>
+                                                <div class="coupons-list">
+                                                    <span>no coupons yet</span>
+                                                </div>
+                                            </div>
+                                            <div class="detail-item">
+                                                <label>Country:</label>
+                                                <span>database connection in progress</span>
+                                            </div>
+                                        </div>
+                                        <div class="user-actions">
+                                            <button class="block-user-btn" onclick="showBlockReason()">
+                                                <i class="fas fa-ban"></i> Block User
+                                            </button>
+                                            <button class="suspend-user-btn" onclick="showSuspendReason()">
+                                                <i class="fas fa-pause-circle"></i> Suspend User
+                                            </button>
+                                            <button class="message-user-btn" onclick="sendMessage()">
+                                                <i class="fas fa-envelope"></i> Send Message
+                                            </button>
+                                        </div>
+                                        <div class="action-reason" id="blockReason" style="display: none;">
+                                            <textarea placeholder="Enter reason for blocking..." class="reason-input"></textarea>
+                                            <button class="submit-reason" onclick="submitBlockReason()">Submit</button>
+                                        </div>
+                                        <div class="action-reason" id="suspendReason" style="display: none;">
+                                            <textarea placeholder="Enter reason for suspension..." class="reason-input"></textarea>
+                                            <button class="submit-reason" onclick="submitSuspendReason()">Submit</button>
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Coupons Section -->
+            <div class="content-section" id="coupons">
+                <div class="coupons-container">
+                    <!-- Top Row: Users Assigned Coupons -->
+                    <div class="cyber-card assigned-coupons">
+                        <h3>Users Assigned Coupons</h3>
+                        <div class="data-table">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Email</th>
+                                        <th>Virtual Floor</th>
+                                        <th>Country</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="assignedUsersTable">
+                                    <!-- Will be populated dynamically -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Bottom Row: Pending Coupons -->
+                    <div class="cyber-card pending-coupons">
+                        <h3>Pending Coupons to Assign</h3>
+                        <div class="pending-user-info">
+                            <div class="user-details">
+                                <div class="detail-item">
+                                    <label>Email:</label>
+                                    <span>supabaseuser.com</span>
+                                </div>
+                                <div class="detail-item">
+                                    <label>Virtual Floor:</label>
+                                    <span>1</span>
+                                </div>
+                                <div class="detail-item">
+                                    <label>Country:</label>
+                                    <span>database connection in progress</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Reports Section -->
+            <div class="content-section" id="reports">
+                <div class="cyber-card">
+                    <h3>User Activity Reports</h3>
+                    <div class="no-data-container">
+                        <div class="no-data-icon">
+                            <i class="fas fa-file-alt"></i>
+                        </div>
+                        <h4>No Reports Found</h4>
+                        <p>There are currently no user activity reports available.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Rewards Section -->
+            <div class="content-section" id="rewards">
+                <div class="cyber-card">
+                    <h3>User Rewards & Milestones</h3>
+                    <div class="rewards-container">
+                        <div class="user-reward-status">
+                            <div class="user-level">
+                                <div class="level-circle">
+                                    <span class="level-number">1</span>
+                                    <span class="level-label">Level</span>
+                                </div>
+                                <div class="level-info">
+                                    <h4>
+                                        supabaseuser.com
+                                        <span class="status-blip active"></span>
+                                    </h4>
+                                    <div class="xp-bar">
+                                        <div class="xp-progress" style="width: 0%"></div>
+                                    </div>
+                                    <span class="xp-text">0/100 XP</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="milestones-dropdown">
+                            <div class="dropdown-header">
+                                <h4>Available Milestones</h4>
+                                <i class="fas fa-chevron-down"></i>
+                            </div>
+                            <div class="dropdown-content">
+                                <div class="milestone-card active">
+                                    <div class="milestone-icon">
+                                        <i class="fas fa-map-marked-alt"></i>
+                                    </div>
+                                    <div class="milestone-content">
+                                        <h5>Explore Virtual Floor</h5>
+                                        <p>Complete your first virtual floor exploration</p>
+                                        <div class="milestone-reward">
+                                            <i class="fas fa-star"></i>
+                                            <span>100 XP</span>
+                                        </div>
+                                    </div>
+                                    <div class="milestone-status">
+                                        <span class="status-badge pending">Pending</span>
+                                    </div>
+                                </div>
+
+                                <div class="milestone-card locked">
+                                    <div class="milestone-icon">
+                                        <i class="fas fa-video"></i>
+                                    </div>
+                                    <div class="milestone-content">
+                                        <h5>Place Your First Video</h5>
+                                        <p>Upload and place your first video in the virtual space</p>
+                                        <div class="milestone-reward">
+                                            <i class="fas fa-star"></i>
+                                            <span>200 XP</span>
+                                        </div>
+                                    </div>
+                                    <div class="milestone-status">
+                                        <span class="status-badge locked">Locked</span>
+                                    </div>
+                                </div>
+
+                                <div class="milestone-card locked">
+                                    <div class="milestone-icon">
+                                        <i class="fas fa-robot"></i>
+                                    </div>
+                                    <div class="milestone-content">
+                                        <h5>AI Image Creator</h5>
+                                        <p>Generate your first image using Leonardo AI</p>
+                                        <div class="milestone-reward">
+                                            <i class="fas fa-star"></i>
+                                            <span>300 XP</span>
+                                        </div>
+                                    </div>
+                                    <div class="milestone-status">
+                                        <span class="status-badge locked">Locked</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Admin Approval Section -->
+            <div class="content-section" id="approval">
+                <div class="cyber-card">
+                    <h3>Content Approval Requests</h3>
+                    <div class="approval-container">
+                        <div class="no-data-container">
+                            <div class="no-data-icon">
+                                <i class="fas fa-check-circle"></i>
+                            </div>
+                            <h4>No Content to Review</h4>
+                            <p>There are currently no content approval requests pending.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html> 
