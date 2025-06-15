@@ -220,4 +220,286 @@ document.removeEventListener('keydown', function(event) {
     if (event.key.toLowerCase() === 'm') {
         // ... existing code ...
     }
-}); 
+});
+
+// Video Approval Functions
+async function fetchPendingVideos() {
+    try {
+        const response = await fetch('http://localhost:3000/api/videos');
+        const videos = await response.json();
+        displayVideos(videos);
+    } catch (error) {
+        console.error('Error fetching videos:', error);
+        showNoVideosMessage();
+    }
+}
+
+function displayVideos(videos) {
+    const container = document.getElementById('videoApprovalContainer');
+    
+    if (!videos || videos.length === 0) {
+        showNoVideosMessage();
+        return;
+    }
+
+    container.innerHTML = videos.map(video => `
+        <div class="user-approval-card" data-video-id="${video.id}">
+            <div class="user-header">
+                <div class="user-info">
+                    <h4><span class="status-icon"></span>${video.userId}</h4>
+                    <div class="user-details">
+                        <span>Request Time: ${new Date(video.timestamp).toLocaleString()}</span>
+                    </div>
+                </div>
+                <button class="minimize-btn" onclick="toggleMinimize(this)">
+                    <i class="fas fa-chevron-up"></i>
+                </button>
+            </div>
+            <div class="content-preview">
+                <h5>Content Permission Requested</h5>
+                <div class="video-preview">
+                    <iframe 
+                        width="560" 
+                        height="315" 
+                        src="${video.videoUrl}" 
+                        title="Content Preview" 
+                        frameborder="0" 
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                        allowfullscreen>
+                    </iframe>
+                </div>
+            </div>
+            <div class="approval-actions">
+                <button class="approve-btn" onclick="handleVideoApproval(${video.id}, 'approved')">
+                    <i class="fas fa-check"></i> Approve
+                </button>
+                <button class="block-btn" onclick="handleVideoApproval(${video.id}, 'blocked')">
+                    <i class="fas fa-times"></i> Block
+                </button>
+                <button class="ask-btn" onclick="handleVideoApproval(${video.id}, 'needs_changes')">
+                    <i class="fas fa-envelope"></i> Ask User for Change
+                </button>
+            </div>
+        </div>
+    `).join('');
+}
+
+function showNoVideosMessage() {
+    const container = document.getElementById('videoApprovalContainer');
+    container.innerHTML = `
+        <div class="no-data-container">
+            <div class="no-data-icon">
+                <i class="fas fa-check-circle"></i>
+            </div>
+            <h4>No Content to Review</h4>
+            <p>There are currently no content approval requests pending.</p>
+        </div>
+    `;
+}
+
+async function handleVideoApproval(videoId, status) {
+    try {
+        const response = await fetch(`http://localhost:3000/api/videos/${videoId}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ status })
+        });
+
+        if (response.ok) {
+            // Refresh the video list
+            fetchPendingVideos();
+        } else {
+            console.error('Error updating video status');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+    }
+}
+
+// Fetch videos when the approval section is loaded
+document.addEventListener('DOMContentLoaded', function() {
+    const approvalLink = document.querySelector('a[href="#approval"]');
+    if (approvalLink) {
+        approvalLink.addEventListener('click', fetchPendingVideos);
+    }
+});
+
+// URL Approval Functions
+async function fetchPendingUrls() {
+    try {
+        const response = await fetch('http://localhost:3000/api/urls');
+        const urls = await response.json();
+        displayUrls(urls);
+    } catch (error) {
+        console.error('Error fetching URLs:', error);
+        showNoUrlsMessage();
+    }
+}
+
+function displayUrls(urls) {
+    const container = document.getElementById('urlApprovalContainer');
+    
+    if (!urls || urls.length === 0) {
+        showNoUrlsMessage();
+        return;
+    }
+
+    container.innerHTML = urls.map(url => `
+        <div class="user-approval-card" data-url-id="${url.id}">
+            <div class="user-header">
+                <div class="user-info">
+                    <h4>URL Submission</h4>
+                    <div class="user-details">
+                        <span>Submitted: ${new Date(url.timestamp).toLocaleString()}</span>
+                    </div>
+                </div>
+                <button class="minimize-btn" onclick="toggleMinimize(this)">
+                    <i class="fas fa-chevron-up"></i>
+                </button>
+            </div>
+            <div class="content-preview">
+                <h5>URL to Review</h5>
+                <div class="url-preview">
+                    <a href="${url.url}" target="_blank" class="url-link">${url.url}</a>
+                </div>
+            </div>
+            <div class="approval-actions">
+                <button class="approve-btn" onclick="handleUrlApproval(${url.id}, 'approved')">
+                    <i class="fas fa-check"></i> Approve
+                </button>
+                <button class="block-btn" onclick="handleUrlApproval(${url.id}, 'blocked')">
+                    <i class="fas fa-times"></i> Block
+                </button>
+            </div>
+        </div>
+    `).join('');
+}
+
+function showNoUrlsMessage() {
+    const container = document.getElementById('urlApprovalContainer');
+    container.innerHTML = `
+        <div class="no-data-container">
+            <div class="no-data-icon">
+                <i class="fas fa-check-circle"></i>
+            </div>
+            <h4>No URLs to Review</h4>
+            <p>There are currently no URL approval requests pending.</p>
+        </div>
+    `;
+}
+
+async function handleUrlApproval(urlId, status) {
+    try {
+        const response = await fetch(`http://localhost:3000/api/urls/${urlId}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ status })
+        });
+
+        if (response.ok) {
+            // Refresh the URL list
+            fetchPendingUrls();
+        } else {
+            console.error('Error updating URL status');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+    }
+}
+
+// Fetch URLs when the approval section is loaded
+document.addEventListener('DOMContentLoaded', function() {
+    const approvalLink = document.querySelector('a[href="#approval"]');
+    if (approvalLink) {
+        approvalLink.addEventListener('click', fetchPendingUrls);
+    }
+});
+
+// Coupon Generator Functions
+const generationLimits = {
+    video: 0,
+    image: 0,
+    asset: 0
+};
+
+function generateCoupons(type) {
+    if (generationLimits[type] >= 2) {
+        showWarningMessage(type);
+        return;
+    }
+
+    const container = document.getElementById(`${type}Coupons`);
+    const codes = generateUniqueCodes(5);
+    
+    codes.forEach(code => {
+        const couponElement = document.createElement('div');
+        couponElement.className = 'coupon-code';
+        couponElement.innerHTML = `
+            <span>${code}</span>
+            <button class="copy-btn" onclick="copyToClipboard('${code}')">
+                <i class="fas fa-copy"></i>
+            </button>
+        `;
+        container.appendChild(couponElement);
+    });
+
+    generationLimits[type]++;
+    updateGenerateButton(type);
+}
+
+function showWarningMessage(type) {
+    const warningDiv = document.createElement('div');
+    warningDiv.className = 'warning-message';
+    warningDiv.innerHTML = `
+        <i class="fas fa-exclamation-triangle"></i>
+        <span>More coupons can only be generated once previous ones are redeemed</span>
+        <button class="close-warning" onclick="this.parentElement.remove()">
+            <i class="fas fa-times"></i>
+        </button>
+    `;
+    
+    const container = document.getElementById(`${type}Coupons`).parentElement;
+    container.insertBefore(warningDiv, container.firstChild);
+}
+
+function updateGenerateButton(type) {
+    const button = document.querySelector(`#${type}Coupons`).parentElement.querySelector('.generate-btn');
+    if (generationLimits[type] >= 2) {
+        button.disabled = true;
+        button.style.opacity = '0.5';
+        button.style.cursor = 'not-allowed';
+    }
+}
+
+function generateUniqueCodes(count) {
+    const codes = new Set();
+    const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    
+    while (codes.size < count) {
+        let code = '';
+        for (let i = 0; i < 6; i++) {
+            code += characters.charAt(Math.floor(Math.random() * characters.length));
+        }
+        codes.add(code);
+    }
+    
+    return Array.from(codes);
+}
+
+function copyToClipboard(text) {
+    navigator.clipboard.writeText(text).then(() => {
+        // Show a temporary success message
+        const button = event.currentTarget;
+        const originalIcon = button.innerHTML;
+        button.innerHTML = '<i class="fas fa-check"></i>';
+        setTimeout(() => {
+            button.innerHTML = originalIcon;
+        }, 2000);
+    }).catch(err => {
+        console.error('Failed to copy text: ', err);
+    });
+} 

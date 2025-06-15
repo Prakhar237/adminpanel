@@ -21,6 +21,7 @@
                     <li><a href="#reports"><i class="fas fa-file-alt"></i> User Reports</a></li>
                     <li><a href="#rewards"><i class="fas fa-gift"></i> User Rewards</a></li>
                     <li><a href="#approval"><i class="fas fa-check-circle"></i> Admin Approval</a></li>
+                    <li><a href="#coupon-generator"><i class="fas fa-ticket-alt"></i> Generate Coupon</a></li>
                 </ul>
             </nav>
             <button class="sidebar-toggle" id="sidebarToggle">
@@ -272,14 +273,49 @@
             <!-- Admin Approval Section -->
             <div class="content-section" id="approval">
                 <div class="cyber-card">
-                    <h3>Content Approval Requests</h3>
-                    <div class="approval-container">
-                        <div class="no-data-container">
-                            <div class="no-data-icon">
-                                <i class="fas fa-check-circle"></i>
+                    <h3>URL Approval Requests</h3>
+                    <div class="approval-container" id="urlApprovalContainer">
+                        <!-- URLs will be loaded here dynamically -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Coupon Generator Section -->
+            <div class="content-section" id="coupon-generator">
+                <div class="cyber-card">
+                    <h3>Coupon Generator</h3>
+                    <div class="coupon-generator-container">
+                        <!-- Video Coupons -->
+                        <div class="coupon-section">
+                            <h4>Video Coupons</h4>
+                            <div class="coupon-list" id="videoCoupons">
+                                <!-- Generated codes will appear here -->
                             </div>
-                            <h4>No Content to Review</h4>
-                            <p>There are currently no content approval requests pending.</p>
+                            <button class="generate-btn" onclick="generateCoupons('video')">
+                                <i class="fas fa-plus"></i> Generate
+                            </button>
+                        </div>
+
+                        <!-- Image Generation Coupons -->
+                        <div class="coupon-section">
+                            <h4>Image Generation Coupons</h4>
+                            <div class="coupon-list" id="imageCoupons">
+                                <!-- Generated codes will appear here -->
+                            </div>
+                            <button class="generate-btn" onclick="generateCoupons('image')">
+                                <i class="fas fa-plus"></i> Generate
+                            </button>
+                        </div>
+
+                        <!-- 3D Asset Coupons -->
+                        <div class="coupon-section">
+                            <h4>3D Asset Coupons</h4>
+                            <div class="coupon-list" id="assetCoupons">
+                                <!-- Generated codes will appear here -->
+                            </div>
+                            <button class="generate-btn" onclick="generateCoupons('asset')">
+                                <i class="fas fa-plus"></i> Generate
+                            </button>
                         </div>
                     </div>
                 </div>
