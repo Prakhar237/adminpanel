@@ -1,3 +1,18 @@
+// Import Supabase client
+const { createClient } = supabase;
+
+// Initialize Supabase client
+const supabaseClient = createClient(
+    'https://hlxmcnykwjdbpxxyosoc.supabase.co',
+    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhseG1jbnlrd2pkYnB4eHlvc29jIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc0ODg4MDgyNSwiZXhwIjoyMDY0NDU2ODI1fQ.RGe-KTVUK2F71Uv9EpIl2Nmlj_mJEEmxHN091Fs0a-c',
+    {
+        auth: {
+            autoRefreshToken: false,
+            persistSession: false
+        }
+    }
+);
+
 // Check if we're on the login page
 if (document.getElementById('loginForm')) {
     const loginForm = document.getElementById('loginForm');
@@ -286,6 +301,8 @@ function displayVideos(videos) {
 
 function showNoVideosMessage() {
     const container = document.getElementById('videoApprovalContainer');
+    if (!container) return; // Exit if container doesn't exist
+    
     container.innerHTML = `
         <div class="no-data-container">
             <div class="no-data-icon">
@@ -379,6 +396,8 @@ function displayUrls(urls) {
 
 function showNoUrlsMessage() {
     const container = document.getElementById('urlApprovalContainer');
+    if (!container) return; // Exit if container doesn't exist
+    
     container.innerHTML = `
         <div class="no-data-container">
             <div class="no-data-icon">
@@ -416,6 +435,106 @@ document.addEventListener('DOMContentLoaded', function() {
     const approvalLink = document.querySelector('a[href="#approval"]');
     if (approvalLink) {
         approvalLink.addEventListener('click', fetchPendingUrls);
+    }
+});
+
+// Function to fetch YouTube URLs
+async function fetchYouTubeUrls() {
+    try {
+        const response = await fetch('http://localhost:3000/api/youtube-urls');
+        const urls = await response.json();
+        displayYouTubeUrls(urls);
+    } catch (error) {
+        console.error('Error fetching YouTube URLs:', error);
+        showNoYouTubeUrlsMessage();
+    }
+}
+
+// Function to extract YouTube video ID from URL
+function getYouTubeVideoId(url) {
+    const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
+    const match = url.match(regExp);
+    return (match && match[2].length === 11) ? match[2] : null;
+}
+
+function displayYouTubeUrls(urls) {
+    const container = document.getElementById('urlApprovalContainer');
+    
+    if (!urls || urls.length === 0) {
+        showNoYouTubeUrlsMessage();
+        return;
+    }
+
+    container.innerHTML = urls.map(url => {
+        const videoId = getYouTubeVideoId(url.url);
+        const thumbnailUrl = videoId ? `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg` : null;
+        const userEmail = url.user?.email || url.user_id || 'Unknown User';
+        const userCountry = url.user?.raw_user_meta_data?.country || 'Not set';
+        
+        return `
+            <div class="user-approval-card" data-url-id="${url.id}">
+                <div class="user-header">
+                    <div class="user-info">
+                        <h4><span class="status-icon"></span>${userEmail}</h4>
+                        <div class="user-details">
+                            <span>Country: ${userCountry}</span>
+                            <span>Submitted: ${new Date(url.created_at).toLocaleString()}</span>
+                        </div>
+                    </div>
+                    <button class="minimize-btn" onclick="toggleMinimize(this)">
+                        <i class="fas fa-chevron-up"></i>
+                    </button>
+                </div>
+                <div class="content-preview">
+                    <h5>YouTube URL to Review</h5>
+                    <div class="url-preview">
+                        <a href="${url.url}" target="_blank" class="url-link">${url.url}</a>
+                    </div>
+                    ${thumbnailUrl ? `
+                        <div class="video-thumbnail">
+                            <img src="${thumbnailUrl}" alt="Video Thumbnail" onerror="this.src='https://img.youtube.com/vi/${videoId}/hqdefault.jpg'">
+                            <div class="play-button">
+                                <i class="fas fa-play"></i>
+                            </div>
+                        </div>
+                    ` : ''}
+                </div>
+                <div class="approval-actions">
+                    <button class="approve-btn" onclick="handleUrlApproval(${url.id}, 'approved')">
+                        <i class="fas fa-check"></i> Approve
+                    </button>
+                    <button class="block-btn" onclick="handleUrlApproval(${url.id}, 'blocked')">
+                        <i class="fas fa-times"></i> Block
+                    </button>
+                    <button class="ask-btn" onclick="handleUrlApproval(${url.id}, 'needs_changes')">
+                        <i class="fas fa-question"></i> Request Changes
+                    </button>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+function showNoYouTubeUrlsMessage() {
+    const container = document.getElementById('urlApprovalContainer');
+    if (!container) return;
+    
+    container.innerHTML = `
+        <div class="no-data-container">
+            <div class="no-data-icon">
+                <i class="fas fa-check-circle"></i>
+            </div>
+            <h4>No YouTube URLs to Review</h4>
+            <p>There are currently no YouTube URL approval requests pending.</p>
+        </div>
+    `;
+}
+
+// Update the event listener for the approval section
+document.addEventListener('DOMContentLoaded', function() {
+    const approvalLink = document.querySelector('a[href="#approval"]');
+    if (approvalLink) {
+        approvalLink.addEventListener('click', fetchYouTubeUrls);
     }
 });
 
@@ -502,4 +621,308 @@ function copyToClipboard(text) {
     }).catch(err => {
         console.error('Failed to copy text: ', err);
     });
-} 
+}
+
+// Function to fetch users from Supabase
+async function fetchUsers() {
+    try {
+        const { data: users, error } = await supabaseClient
+            .auth.admin.listUsers();
+
+        if (error) throw error;
+        return users.users;
+    } catch (error) {
+        console.error('Error fetching users:', error);
+        return [];
+    }
+}
+
+// Function to update dashboard stats
+async function updateDashboardStats() {
+    const users = await fetchUsers();
+    const totalUsers = users.length;
+    const activeUsers = users.filter(user => user.last_sign_in_at).length;
+    
+    // Update stats in the dashboard
+    document.querySelector('.stat-card:nth-child(1) .value').textContent = totalUsers;
+    document.querySelector('.stat-card:nth-child(2) .value').textContent = '0'; // Active coupons
+    document.querySelector('.stat-card:nth-child(3) .value').textContent = '0'; // Total rewards
+
+    // Update user table
+    const tbody = document.querySelector('#dashboard .data-table tbody');
+    tbody.innerHTML = users.map(user => `
+        <tr class="user-row">
+            <td>${user.email}</td>
+            <td>1</td>
+            <td>${user.raw_user_meta_data?.country || 'Not set'}</td>
+            <td>
+                <button class="expand-btn" onclick="toggleUserDetails(this)">
+                    <i class="fas fa-chevron-down"></i>
+                </button>
+            </td>
+        </tr>
+        <tr class="user-details-row" style="display: none;">
+            <td colspan="4">
+                <div class="user-details-expanded">
+                    <div class="details-grid">
+                        <div class="detail-item">
+                            <label>Signed Up:</label>
+                            <span>${new Date(user.created_at).toLocaleDateString()}</span>
+                        </div>
+                        <div class="detail-item">
+                            <label>Current Status:</label>
+                            <span class="status-badge ${user.last_sign_in_at ? 'active' : 'idle'}">${user.last_sign_in_at ? 'Active' : 'Idle'}</span>
+                        </div>
+                        <div class="detail-item">
+                            <label>Coupons Redeemed:</label>
+                            <div class="coupons-list">
+                                <span>no coupons yet</span>
+                            </div>
+                        </div>
+                        <div class="detail-item">
+                            <label>Country:</label>
+                            <span>${user.raw_user_meta_data?.country || 'Not set'}</span>
+                        </div>
+                    </div>
+                    <div class="user-actions">
+                        <button class="block-user-btn" onclick="showBlockReason()">
+                            <i class="fas fa-ban"></i> Block User
+                        </button>
+                        <button class="suspend-user-btn" onclick="showSuspendReason()">
+                            <i class="fas fa-pause-circle"></i> Suspend User
+                        </button>
+                        <button class="message-user-btn" onclick="sendMessage()">
+                            <i class="fas fa-envelope"></i> Send Message
+                        </button>
+                    </div>
+                    <div class="action-reason" id="blockReason" style="display: none;">
+                        <textarea placeholder="Enter reason for blocking..." class="reason-input"></textarea>
+                        <button class="submit-reason" onclick="submitBlockReason()">Submit</button>
+                    </div>
+                    <div class="action-reason" id="suspendReason" style="display: none;">
+                        <textarea placeholder="Enter reason for suspension..." class="reason-input"></textarea>
+                        <button class="submit-reason" onclick="submitSuspendReason()">Submit</button>
+                    </div>
+                </div>
+            </td>
+        </tr>
+    `).join('');
+}
+
+// Function to periodically check for updates
+function startPeriodicUpdates() {
+    // Initial update
+    updateDashboardStats();
+    
+    // Set up periodic updates every 30 seconds
+    setInterval(updateDashboardStats, 30000);
+}
+
+// Initialize the dashboard when the page loads
+document.addEventListener('DOMContentLoaded', function() {
+    startPeriodicUpdates();
+    
+    // Add event listeners for tab switching
+    document.querySelectorAll('.sidebar nav a').forEach(link => {
+        link.addEventListener('click', function(e) {
+            e.preventDefault();
+            const targetId = this.getAttribute('href').substring(1);
+            switchTab(targetId);
+        });
+    });
+});
+
+// Function to update coupon inventory users
+async function updateCouponInventoryUsers() {
+    const users = await fetchUsers();
+    const assignedUsersTable = document.getElementById('assignedUsersTable');
+    
+    if (users.length === 0) {
+        assignedUsersTable.innerHTML = `
+            <tr>
+                <td colspan="4" class="no-data">No users found</td>
+            </tr>
+        `;
+        return;
+    }
+
+    assignedUsersTable.innerHTML = users.map(user => `
+        <tr>
+            <td>${user.email}</td>
+            <td>1</td>
+            <td>${user.raw_user_meta_data?.country || 'Not specified'}</td>
+            <td>Active</td>
+        </tr>
+    `).join('');
+}
+
+// Function to update rewards section users
+async function updateRewardsUsers() {
+    const users = await fetchUsers();
+    const rewardsContainer = document.querySelector('.rewards-container');
+    
+    if (users.length === 0) {
+        rewardsContainer.innerHTML = `
+            <div class="no-data-container">
+                <div class="no-data-icon">
+                    <i class="fas fa-users"></i>
+                </div>
+                <h4>No Users Found</h4>
+                <p>There are currently no users in the system.</p>
+            </div>
+        `;
+        return;
+    }
+
+    rewardsContainer.innerHTML = users.map(user => `
+        <div class="user-reward-status">
+            <div class="user-level">
+                <div class="level-circle">
+                    <span class="level-number">1</span>
+                    <span class="level-label">Level</span>
+                </div>
+                <div class="level-info">
+                    <h4>
+                        ${user.email}
+                        <span class="status-blip active"></span>
+                    </h4>
+                    <div class="xp-bar">
+                        <div class="xp-progress" style="width: 0%"></div>
+                    </div>
+                    <span class="xp-text">0/100 XP</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="milestones-dropdown">
+            <div class="dropdown-header">
+                <h4>Milestones</h4>
+                <i class="fas fa-chevron-down"></i>
+            </div>
+            <div class="dropdown-content">
+                <div class="milestone-card">
+                    <div class="milestone-icon">
+                        <i class="fas fa-compass"></i>
+                    </div>
+                    <div class="milestone-content">
+                        <h5>Explore Virtual Floor</h5>
+                        <p>Take your first steps in the virtual space</p>
+                        <div class="milestone-reward">
+                            <i class="fas fa-star"></i>
+                            <span>100 XP</span>
+                        </div>
+                    </div>
+                    <div class="milestone-status">
+                        <span class="status-badge pending">Pending</span>
+                    </div>
+                </div>
+
+                <div class="milestone-card locked">
+                    <div class="milestone-icon">
+                        <i class="fas fa-video"></i>
+                    </div>
+                    <div class="milestone-content">
+                        <h5>Place Your First Video</h5>
+                        <p>Upload and place your first video in the virtual space</p>
+                        <div class="milestone-reward">
+                            <i class="fas fa-star"></i>
+                            <span>200 XP</span>
+                        </div>
+                    </div>
+                    <div class="milestone-status">
+                        <span class="status-badge locked">Locked</span>
+                    </div>
+                </div>
+
+                <div class="milestone-card locked">
+                    <div class="milestone-icon">
+                        <i class="fas fa-robot"></i>
+                    </div>
+                    <div class="milestone-content">
+                        <h5>AI Image Creator</h5>
+                        <p>Generate your first image using Leonardo AI</p>
+                        <div class="milestone-reward">
+                            <i class="fas fa-star"></i>
+                            <span>300 XP</span>
+                        </div>
+                    </div>
+                    <div class="milestone-status">
+                        <span class="status-badge locked">Locked</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `).join('');
+
+    // Re-add dropdown functionality
+    const dropdownHeaders = document.querySelectorAll('.dropdown-header');
+    dropdownHeaders.forEach(header => {
+        header.addEventListener('click', function() {
+            this.classList.toggle('active');
+            const content = this.nextElementSibling;
+            content.classList.toggle('active');
+        });
+    });
+}
+
+// Update users when dashboard is loaded
+document.addEventListener('DOMContentLoaded', function() {
+    const dashboardLink = document.querySelector('a[href="#dashboard"]');
+    if (dashboardLink) {
+        dashboardLink.addEventListener('click', updateDashboardStats);
+    }
+
+    const couponsLink = document.querySelector('a[href="#coupons"]');
+    if (couponsLink) {
+        couponsLink.addEventListener('click', updateCouponInventoryUsers);
+    }
+
+    const rewardsLink = document.querySelector('a[href="#rewards"]');
+    if (rewardsLink) {
+        rewardsLink.addEventListener('click', updateRewardsUsers);
+    }
+
+    // Initial load if on dashboard
+    if (window.location.hash === '#dashboard' || !window.location.hash) {
+        updateDashboardStats();
+    }
+});
+
+// Function to switch between tabs
+function switchTab(tabId) {
+    // Hide all content sections
+    document.querySelectorAll('.content-section').forEach(section => {
+        section.classList.remove('active');
+    });
+    
+    // Show the selected section
+    const selectedSection = document.getElementById(tabId);
+    if (selectedSection) {
+        selectedSection.classList.add('active');
+    }
+    
+    // Update active state in sidebar
+    document.querySelectorAll('.sidebar nav ul li').forEach(item => {
+        item.classList.remove('active');
+    });
+    
+    const activeLink = document.querySelector(`.sidebar nav ul li a[href="#${tabId}"]`);
+    if (activeLink) {
+        activeLink.parentElement.classList.add('active');
+    }
+}
+
+// Add click event listeners for navigation
+document.addEventListener('DOMContentLoaded', function() {
+    // Handle navigation clicks
+    document.querySelectorAll('.sidebar nav ul li a').forEach(link => {
+        link.addEventListener('click', function(e) {
+            e.preventDefault();
+            const tabId = this.getAttribute('href').substring(1);
+            switchTab(tabId);
+        });
+    });
+
+    // Show dashboard by default
+    switchTab('dashboard');
+}); 

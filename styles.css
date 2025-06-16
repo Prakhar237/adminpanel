@@ -916,7 +916,7 @@ th {
 }
 
 .ask-btn {
-    background-color: #2196F3;
+    background-color: #f59e0b;
     color: white;
 }
 
@@ -1154,7 +1154,7 @@ th {
 /* URL Preview Styles */
 .url-preview {
     background: var(--bg-gray);
-    padding: 1rem;
+    padding: 1.5rem;
     border-radius: 8px;
     margin: 1rem 0;
 }
@@ -1168,10 +1168,12 @@ th {
     background: var(--bg-light);
     border-radius: 4px;
     border: 1px solid var(--border-color);
+    transition: all 0.3s ease;
 }
 
 .url-link:hover {
-    text-decoration: underline;
+    background: var(--bg-gray);
+    border-color: var(--primary-color);
 }
 
 /* Coupon Generator Styles */
@@ -1301,4 +1303,52 @@ th {
         transform: translateY(0);
         opacity: 1;
     }
+}
+
+/* Video Thumbnail Styles */
+.video-thumbnail {
+    position: relative;
+    width: 100%;
+    margin-top: 1rem;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.video-thumbnail img {
+    width: 100%;
+    height: auto;
+    display: block;
+    transition: transform 0.3s ease;
+}
+
+.video-thumbnail:hover img {
+    transform: scale(1.02);
+}
+
+.play-button {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 60px;
+    height: 60px;
+    background: rgba(0, 0, 0, 0.7);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.play-button i {
+    color: white;
+    font-size: 24px;
+    margin-left: 4px;
+}
+
+.video-thumbnail:hover .play-button {
+    background: rgba(0, 0, 0, 0.9);
+    transform: translate(-50%, -50%) scale(1.1);
 } 
