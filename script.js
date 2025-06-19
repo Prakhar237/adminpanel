@@ -19,9 +19,26 @@ if (document.getElementById('loginForm')) {
     
     loginForm.addEventListener('submit', function(e) {
         e.preventDefault();
-        // Directly redirect to dashboard without checking credentials
+        console.log('Login form submitted, redirecting to dashboard...');
+        
+        // Get form data (optional, for future authentication)
+        const username = document.getElementById('username').value;
+        const password = document.getElementById('password').value;
+        
+        // For now, just redirect to dashboard
+        // In the future, you can add actual authentication here
         window.location.href = 'dashboard.html';
     });
+    
+    // Also add click handler for the submit button as backup
+    const submitButton = loginForm.querySelector('button[type="submit"]');
+    if (submitButton) {
+        submitButton.addEventListener('click', function(e) {
+            e.preventDefault();
+            console.log('Login button clicked, redirecting to dashboard...');
+            window.location.href = 'dashboard.html';
+        });
+    }
 }
 
 // Check if we're on the dashboard page
@@ -442,7 +459,18 @@ document.addEventListener('DOMContentLoaded', function() {
 async function fetchYouTubeUrls() {
     try {
         const response = await fetch('http://localhost:3000/api/youtube-urls');
-        const urls = await response.json();
+        
+        // Check if the response is successful
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        
+        // Ensure we have an array of URLs
+        const urls = Array.isArray(data) ? data : [];
+        
+        console.log('Fetched YouTube URLs:', urls);
         displayYouTubeUrls(urls);
     } catch (error) {
         console.error('Error fetching YouTube URLs:', error);
@@ -460,59 +488,77 @@ function getYouTubeVideoId(url) {
 function displayYouTubeUrls(urls) {
     const container = document.getElementById('urlApprovalContainer');
     
+    // Ensure urls is an array
+    if (!Array.isArray(urls)) {
+        console.error('displayYouTubeUrls: urls is not an array:', urls);
+        showNoYouTubeUrlsMessage();
+        return;
+    }
+    
     if (!urls || urls.length === 0) {
         showNoYouTubeUrlsMessage();
         return;
     }
 
-    container.innerHTML = urls.map(url => {
-        const videoId = getYouTubeVideoId(url.url);
-        const thumbnailUrl = videoId ? `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg` : null;
-        const userEmail = url.user?.email || url.user_id || 'Unknown User';
-        const userCountry = url.user?.raw_user_meta_data?.country || 'Not set';
-        
-        return `
-            <div class="user-approval-card" data-url-id="${url.id}">
-                <div class="user-header">
-                    <div class="user-info">
-                        <h4><span class="status-icon"></span>${userEmail}</h4>
-                        <div class="user-details">
-                            <span>Country: ${userCountry}</span>
-                            <span>Submitted: ${new Date(url.created_at).toLocaleString()}</span>
-                        </div>
-                    </div>
-                    <button class="minimize-btn" onclick="toggleMinimize(this)">
-                        <i class="fas fa-chevron-up"></i>
-                    </button>
-                </div>
-                <div class="content-preview">
-                    <h5>YouTube URL to Review</h5>
-                    <div class="url-preview">
-                        <a href="${url.url}" target="_blank" class="url-link">${url.url}</a>
-                    </div>
-                    ${thumbnailUrl ? `
-                        <div class="video-thumbnail">
-                            <img src="${thumbnailUrl}" alt="Video Thumbnail" onerror="this.src='https://img.youtube.com/vi/${videoId}/hqdefault.jpg'">
-                            <div class="play-button">
-                                <i class="fas fa-play"></i>
+    try {
+        container.innerHTML = urls.map(url => {
+            // Ensure url is an object with required properties
+            if (!url || typeof url !== 'object') {
+                console.error('Invalid url object:', url);
+                return '';
+            }
+            
+            const videoId = getYouTubeVideoId(url.url || '');
+            const thumbnailUrl = videoId ? `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg` : null;
+            const userEmail = url.user?.email || url.user_id || 'Unknown User';
+            const userCountry = url.user?.raw_user_meta_data?.country || 'Not set';
+            
+            return `
+                <div class="user-approval-card" data-url-id="${url.id || 'unknown'}">
+                    <div class="user-header">
+                        <div class="user-info">
+                            <h4><span class="status-icon"></span>${userEmail}</h4>
+                            <div class="user-details">
+                                <span>Country: ${userCountry}</span>
+                                <span>Submitted: ${new Date(url.created_at || Date.now()).toLocaleString()}</span>
                             </div>
                         </div>
-                    ` : ''}
+                        <button class="minimize-btn" onclick="toggleMinimize(this)">
+                            <i class="fas fa-chevron-up"></i>
+                        </button>
+                    </div>
+                    <div class="content-preview">
+                        <h5>YouTube URL to Review</h5>
+                        <div class="url-preview">
+                            <a href="${url.url || '#'}" target="_blank" class="url-link">${url.url || 'No URL provided'}</a>
+                        </div>
+                        ${thumbnailUrl ? `
+                            <div class="video-thumbnail">
+                                <img src="${thumbnailUrl}" alt="Video Thumbnail" onerror="this.src='https://img.youtube.com/vi/${videoId}/hqdefault.jpg'">
+                                <div class="play-button">
+                                    <i class="fas fa-play"></i>
+                                </div>
+                            </div>
+                        ` : ''}
+                    </div>
+                    <div class="approval-actions">
+                        <button class="approve-btn" onclick="handleUrlApproval(${url.id || 'unknown'}, 'approved')">
+                            <i class="fas fa-check"></i> Approve
+                        </button>
+                        <button class="block-btn" onclick="handleUrlApproval(${url.id || 'unknown'}, 'blocked')">
+                            <i class="fas fa-times"></i> Block
+                        </button>
+                        <button class="ask-btn" onclick="handleUrlApproval(${url.id || 'unknown'}, 'needs_changes')">
+                            <i class="fas fa-question"></i> Request Changes
+                        </button>
+                    </div>
                 </div>
-                <div class="approval-actions">
-                    <button class="approve-btn" onclick="handleUrlApproval(${url.id}, 'approved')">
-                        <i class="fas fa-check"></i> Approve
-                    </button>
-                    <button class="block-btn" onclick="handleUrlApproval(${url.id}, 'blocked')">
-                        <i class="fas fa-times"></i> Block
-                    </button>
-                    <button class="ask-btn" onclick="handleUrlApproval(${url.id}, 'needs_changes')">
-                        <i class="fas fa-question"></i> Request Changes
-                    </button>
-                </div>
-            </div>
-        `;
-    }).join('');
+            `;
+        }).join('');
+    } catch (error) {
+        console.error('Error displaying YouTube URLs:', error);
+        showNoYouTubeUrlsMessage();
+    }
 }
 
 function showNoYouTubeUrlsMessage() {

@@ -36,46 +36,80 @@ app.get('/api/users', async (req, res) => {
 // Endpoint to get YouTube URLs
 app.get('/api/youtube-urls', async (req, res) => {
     try {
+        console.log('Fetching YouTube URLs from Supabase...');
+        
+        // First, get all YouTube URLs without the join
         const { data: urls, error } = await supabase
             .from('youtube_urls')
-            .select(`
-                *,
-                user:user_id (
-                    email,
-                    raw_user_meta_data
-                )
-            `)
+            .select('*')
             .order('created_at', { ascending: false });
 
         if (error) {
             console.error('Supabase error:', error);
-            throw error;
+            return res.status(500).json({ 
+                error: 'Failed to fetch YouTube URLs',
+                details: error.message,
+                hint: error.hint || 'Check if the youtube_urls table exists in your Supabase database'
+            });
         }
 
-        // Transform the data to ensure we have the email
+        if (!urls) {
+            console.log('No URLs found');
+            return res.json([]);
+        }
+
+        console.log(`Found ${urls.length} URLs, fetching user data...`);
+        
+        // Fetch user data for each URL separately
         const transformedUrls = await Promise.all(urls.map(async (url) => {
-            if (!url.user?.email) {
-                // If email is not in the joined data, fetch it directly from auth.users
+            try {
+                // Try to get user data from auth.users table
                 const { data: userData, error: userError } = await supabase
                     .from('auth.users')
                     .select('email, raw_user_meta_data')
                     .eq('id', url.user_id)
                     .single();
 
-                if (!userError && userData) {
-                    url.user = {
-                        email: userData.email,
-                        raw_user_meta_data: userData.raw_user_meta_data
+                if (userError) {
+                    console.log(`Could not fetch user data for user_id: ${url.user_id}`, userError.message);
+                    // If we can't get user data, just return the URL with basic info
+                    return {
+                        ...url,
+                        user: {
+                            email: `User ${url.user_id}`,
+                            raw_user_meta_data: { country: 'Unknown' }
+                        }
                     };
                 }
+
+                return {
+                    ...url,
+                    user: {
+                        email: userData.email || `User ${url.user_id}`,
+                        raw_user_meta_data: userData.raw_user_meta_data || { country: 'Unknown' }
+                    }
+                };
+            } catch (userError) {
+                console.error('Error fetching user data for URL:', url.id, userError);
+                return {
+                    ...url,
+                    user: {
+                        email: `User ${url.user_id}`,
+                        raw_user_meta_data: { country: 'Unknown' }
+                    }
+                };
             }
-            return url;
         }));
 
+        console.log('Successfully transformed URLs data');
         res.json(transformedUrls);
     } catch (error) {
-        console.error('Error fetching YouTube URLs:', error);
-        res.status(500).json({ error: 'Failed to fetch YouTube URLs' });
+        console.error('Unexpected error fetching YouTube URLs:', error);
+        res.status(500).json({ 
+            error: 'Failed to fetch YouTube URLs',
+            details: error.message,
+            stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+        });
     }
 });
 
