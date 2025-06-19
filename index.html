@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>TAP24H Admin Login</title>
-    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="/styles.css">
 </head>
 <body>
     <div class="login-container">
@@ -23,10 +23,15 @@
             </form>
             <!-- Add a direct link as backup -->
             <div style="text-align: center; margin-top: 1rem;">
-                <a href="dashboard.html" style="color: #3b82f6; text-decoration: none;">Or click here to go directly to dashboard</a>
+                <a href="/dashboard.html" style="color: #3b82f6; text-decoration: none;">Or click here to go directly to dashboard</a>
             </div>
         </div>
     </div>
-    <script src="script.js"></script>
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <script>
+        // Initialize Supabase client before loading main script
+        window.supabase = supabase;
+    </script>
+    <script src="/script.js"></script>
 </body>
 </html> 
