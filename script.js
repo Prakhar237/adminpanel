@@ -257,7 +257,7 @@ document.removeEventListener('keydown', function(event) {
 // Video Approval Functions
 async function fetchPendingVideos() {
     try {
-        const response = await fetch('http://localhost:3000/api/videos');
+        const response = await fetch('/api/youtube-urls');
         const videos = await response.json();
         displayVideos(videos);
     } catch (error) {
@@ -333,7 +333,7 @@ function showNoVideosMessage() {
 
 async function handleVideoApproval(videoId, status) {
     try {
-        const response = await fetch(`http://localhost:3000/api/videos/${videoId}`, {
+        const response = await fetch(`/api/youtube-urls/${videoId}`, {
             method: 'PUT',
             headers: {
                 'Content-Type': 'application/json'
@@ -363,7 +363,7 @@ document.addEventListener('DOMContentLoaded', function() {
 // URL Approval Functions
 async function fetchPendingUrls() {
     try {
-        const response = await fetch('http://localhost:3000/api/urls');
+        const response = await fetch('/api/youtube-urls');
         const urls = await response.json();
         displayUrls(urls);
     } catch (error) {
@@ -428,7 +428,7 @@ function showNoUrlsMessage() {
 
 async function handleUrlApproval(urlId, status) {
     try {
-        const response = await fetch(`http://localhost:3000/api/urls/${urlId}`, {
+        const response = await fetch(`/api/youtube-urls/${urlId}`, {
             method: 'PUT',
             headers: {
                 'Content-Type': 'application/json'
@@ -458,7 +458,7 @@ document.addEventListener('DOMContentLoaded', function() {
 // Function to fetch YouTube URLs
 async function fetchYouTubeUrls() {
     try {
-        const response = await fetch('http://localhost:3000/api/youtube-urls');
+        const response = await fetch('/api/youtube-urls');
         
         // Check if the response is successful
         if (!response.ok) {
