@@ -10,8 +10,8 @@ const supabaseClient = createClient(
 // Check if we're on the login page
 if (document.getElementById('loginForm')) {
     const loginForm = document.getElementById('loginForm');
-    
-    loginForm.addEventListener('submit', function(e) {
+
+    loginForm.addEventListener('submit', function (e) {
         e.preventDefault();
         console.log('Login form submitted, redirecting to dashboard...');
         window.location.href = 'dashboard.html';
@@ -25,39 +25,39 @@ if (document.getElementById('logoutBtn')) {
     const sidebar = document.querySelector('.sidebar');
     const mainContent = document.querySelector('.main-content');
     const navLinks = document.querySelectorAll('.sidebar nav ul li a');
-    
+
     // Sidebar toggle functionality
-    sidebarToggle.addEventListener('click', function() {
+    sidebarToggle.addEventListener('click', function () {
         sidebar.classList.toggle('collapsed');
         mainContent.classList.toggle('expanded');
         const icon = this.querySelector('i');
         icon.classList.toggle('fa-chevron-left');
         icon.classList.toggle('fa-chevron-right');
     });
-    
+
     // Logout functionality
-    logoutBtn.addEventListener('click', function() {
+    logoutBtn.addEventListener('click', function () {
         window.location.href = 'index.html';
     });
-    
+
     // Handle sidebar navigation
     navLinks.forEach(link => {
-        link.addEventListener('click', function(e) {
+        link.addEventListener('click', function (e) {
             e.preventDefault();
-            
+
             // Remove active class from all links and sections
             navLinks.forEach(l => l.parentElement.classList.remove('active'));
             document.querySelectorAll('.content-section').forEach(section => {
                 section.classList.remove('active');
             });
-            
+
             // Add active class to clicked link
             this.parentElement.classList.add('active');
-            
+
             // Show corresponding content section
             const sectionId = this.getAttribute('href').substring(1);
             document.getElementById(sectionId).classList.add('active');
-            
+
             // Update header title
             document.querySelector('.header h1').textContent = this.textContent.trim();
         });
@@ -83,7 +83,7 @@ if (document.getElementById('sendKitBtn')) {
     const assignedUsersTable = document.getElementById('assignedUsersTable');
     const pendingUserInfo = document.querySelector('.pending-user-info');
 
-    sendKitBtn.addEventListener('click', function() {
+    sendKitBtn.addEventListener('click', function () {
         // Show popup
         popupMessage.textContent = 'supabaseuser.com has been sent the sign-up kit';
         popupOverlay.classList.add('active');
@@ -102,12 +102,12 @@ if (document.getElementById('sendKitBtn')) {
         pendingUserInfo.style.display = 'none';
     });
 
-    closePopup.addEventListener('click', function() {
+    closePopup.addEventListener('click', function () {
         popupOverlay.classList.remove('active');
     });
 
     // Close popup when clicking outside
-    popupOverlay.addEventListener('click', function(e) {
+    popupOverlay.addEventListener('click', function (e) {
         if (e.target === popupOverlay) {
             popupOverlay.classList.remove('active');
         }
@@ -115,12 +115,12 @@ if (document.getElementById('sendKitBtn')) {
 }
 
 // Milestones Dropdown Functionality
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
     const dropdownHeader = document.querySelector('.dropdown-header');
     const dropdownContent = document.querySelector('.dropdown-content');
 
     if (dropdownHeader && dropdownContent) {
-        dropdownHeader.addEventListener('click', function() {
+        dropdownHeader.addEventListener('click', function () {
             this.classList.toggle('active');
             dropdownContent.classList.toggle('active');
         });
@@ -139,23 +139,23 @@ function handleApproval(action) {
     const userCard = document.querySelector('.user-approval-card');
     const statusIcon = document.querySelector('.status-icon');
     const blockComments = document.querySelector('.block-comments');
-    
-    switch(action) {
+
+    switch (action) {
         case 'approve':
             userCard.classList.add('minimized');
             statusIcon.classList.add('approved');
             blockComments.style.display = 'none';
             break;
-            
+
         case 'block':
             blockComments.style.display = 'block';
             break;
-            
+
         case 'ask':
             const email = 'supabaseuser.com';
             const subject = 'Please change your content';
             const body = 'Your content is found to be in violation of our community guidelines. Please review and make the necessary changes to comply with our content standards. We appreciate your cooperation in maintaining a positive and appropriate environment for all users.';
-            
+
             const mailtoLink = `mailto:${email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
             window.location.href = mailtoLink;
             break;
@@ -167,7 +167,7 @@ function toggleUserDetails(button) {
     const userRow = button.closest('tr');
     const detailsRow = userRow.nextElementSibling;
     const icon = button.querySelector('i');
-    
+
     button.classList.toggle('rotated');
     detailsRow.style.display = detailsRow.style.display === 'none' ? 'table-row' : 'none';
 }
@@ -176,7 +176,7 @@ function toggleUserDetails(button) {
 function showBlockReason() {
     const blockReason = document.getElementById('blockReason');
     const suspendReason = document.getElementById('suspendReason');
-    
+
     if (blockReason) blockReason.style.display = 'block';
     if (suspendReason) suspendReason.style.display = 'none';
 }
@@ -185,7 +185,7 @@ function showBlockReason() {
 function showSuspendReason() {
     const blockReason = document.getElementById('blockReason');
     const suspendReason = document.getElementById('suspendReason');
-    
+
     if (suspendReason) suspendReason.style.display = 'block';
     if (blockReason) blockReason.style.display = 'none';
 }
@@ -219,7 +219,7 @@ function sendMessage() {
     const email = 'supabaseuser.com';
     const subject = 'Message from TAP24H Admin';
     const body = 'Hello, I would like to discuss something with you regarding your account.';
-    
+
     const mailtoLink = `mailto:${email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
     window.location.href = mailtoLink;
 }
@@ -229,34 +229,34 @@ async function fetchYouTubeUrls() {
     try {
         console.log('Fetching YouTube URLs...');
         console.log('Making request to:', '/api/youtube-urls');
-        
+
         const response = await fetch('/api/youtube-urls');
-        
+
         console.log('Response received:', response);
         console.log('Response status:', response.status);
         console.log('Response headers:', response.headers);
-        
+
         // Check if the response is successful
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
-        
+
         // Check content type
         const contentType = response.headers.get('content-type');
         console.log('Content-Type:', contentType);
-        
+
         if (!contentType || !contentType.includes('application/json')) {
             console.error('Response is not JSON:', contentType);
             const text = await response.text();
             console.error('Response text:', text.substring(0, 200) + '...');
             throw new Error('Response is not JSON');
         }
-        
+
         const data = await response.json();
-        
+
         // Ensure we have an array of URLs
         const urls = Array.isArray(data) ? data : [];
-        
+
         console.log('Fetched YouTube URLs:', urls);
         displayYouTubeUrls(urls);
     } catch (error) {
@@ -274,19 +274,19 @@ function getYouTubeVideoId(url) {
 
 function displayYouTubeUrls(urls) {
     const container = document.getElementById('urlApprovalContainer');
-    
+
     if (!container) {
         console.error('URL approval container not found');
         return;
     }
-    
+
     // Ensure urls is an array
     if (!Array.isArray(urls)) {
         console.error('displayYouTubeUrls: urls is not an array:', urls);
         showNoYouTubeUrlsMessage();
         return;
     }
-    
+
     if (!urls || urls.length === 0) {
         showNoYouTubeUrlsMessage();
         return;
@@ -299,11 +299,11 @@ function displayYouTubeUrls(urls) {
                 console.error('Invalid url object:', url);
                 return '';
             }
-            
+
             const videoId = getYouTubeVideoId(url.url || '');
             const thumbnailUrl = videoId ? `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg` : null;
             const userEmail = url.user_email || url.user_id || 'Unknown User';
-            
+
             return `
                 <div class="user-approval-card" data-url-id="${url.id || 'unknown'}">
                     <div class="user-header">
@@ -354,7 +354,7 @@ function displayYouTubeUrls(urls) {
 function showNoYouTubeUrlsMessage() {
     const container = document.getElementById('urlApprovalContainer');
     if (!container) return;
-    
+
     container.innerHTML = `
         <div class="no-data-container">
             <div class="no-data-icon">
@@ -369,7 +369,7 @@ function showNoYouTubeUrlsMessage() {
 async function handleUrlApproval(urlId, status) {
     try {
         console.log(`Updating URL ${urlId} status to ${status}`);
-        
+
         const response = await fetch(`/api/youtube-urls?id=${urlId}`, {
             method: 'PUT',
             headers: {
@@ -384,7 +384,7 @@ async function handleUrlApproval(urlId, status) {
 
         const result = await response.json();
         console.log('URL status updated:', result);
-        
+
         // Refresh the YouTube URLs list
         fetchYouTubeUrls();
     } catch (error) {
@@ -394,7 +394,7 @@ async function handleUrlApproval(urlId, status) {
 }
 
 // Update the event listener for the approval section
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
     const approvalLink = document.querySelector('a[href="#approval"]');
     if (approvalLink) {
         approvalLink.addEventListener('click', fetchYouTubeUrls);
@@ -416,9 +416,9 @@ function generateCoupons(type) {
 
     const container = document.getElementById(`${type}Coupons`);
     if (!container) return;
-    
+
     const codes = generateUniqueCodes(5);
-    
+
     codes.forEach(code => {
         const couponElement = document.createElement('div');
         couponElement.className = 'coupon-code';
@@ -438,7 +438,7 @@ function generateCoupons(type) {
 function showWarningMessage(type) {
     const container = document.getElementById(`${type}Coupons`);
     if (!container) return;
-    
+
     const warningDiv = document.createElement('div');
     warningDiv.className = 'warning-message';
     warningDiv.innerHTML = `
@@ -448,7 +448,7 @@ function showWarningMessage(type) {
             <i class="fas fa-times"></i>
         </button>
     `;
-    
+
     const parentContainer = container.parentElement;
     parentContainer.insertBefore(warningDiv, parentContainer.firstChild);
 }
@@ -456,7 +456,7 @@ function showWarningMessage(type) {
 function updateGenerateButton(type) {
     const container = document.getElementById(`${type}Coupons`);
     if (!container) return;
-    
+
     const button = container.parentElement.querySelector('.generate-btn');
     if (button && generationLimits[type] >= 2) {
         button.disabled = true;
@@ -468,7 +468,7 @@ function updateGenerateButton(type) {
 function generateUniqueCodes(count) {
     const codes = new Set();
     const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-    
+
     while (codes.size < count) {
         let code = '';
         for (let i = 0; i < 6; i++) {
@@ -476,15 +476,15 @@ function generateUniqueCodes(count) {
         }
         codes.add(code);
     }
-    
+
     return Array.from(codes);
 }
 
 function copyToClipboard(text) {
-    navigator.clipboard.writeText(text).then(function() {
+    navigator.clipboard.writeText(text).then(function () {
         console.log('Copied to clipboard:', text);
         // You could add a toast notification here
-    }).catch(function(err) {
+    }).catch(function (err) {
         console.error('Failed to copy text: ', err);
     });
 }
@@ -496,22 +496,141 @@ function switchTab(tabId) {
     tabContents.forEach(content => {
         content.classList.remove('active');
     });
-    
+
     // Remove active class from all tab buttons
     const tabButtons = document.querySelectorAll('.tab-button');
     tabButtons.forEach(button => {
         button.classList.remove('active');
     });
-    
+
     // Show selected tab content
     const selectedTab = document.getElementById(tabId);
     if (selectedTab) {
         selectedTab.classList.add('active');
     }
-    
+
     // Add active class to clicked button
     const clickedButton = document.querySelector(`[onclick="switchTab('${tabId}')"]`);
     if (clickedButton) {
         clickedButton.classList.add('active');
     }
-} 
+}
+
+// Keyboard shortcut for reports
+document.addEventListener('keydown', function (e) {
+    // Check if key is '1' and reports section is active
+    const reportsSection = document.getElementById('reports');
+    if (e.key === '1' && reportsSection && reportsSection.classList.contains('active')) {
+        addMockReport();
+    }
+});
+
+function addMockReport() {
+    const container = document.getElementById('reportsContainer');
+    if (!container) return;
+
+    // Remove no-data message if present
+    const noData = container.querySelector('.no-data-container');
+    if (noData) {
+        noData.remove();
+    }
+
+    // Create report card
+    const reportCard = document.createElement('div');
+    reportCard.className = 'user-approval-card report-card';
+    reportCard.style.marginTop = '20px';
+    reportCard.style.animation = 'slideIn 0.3s ease-out';
+
+    const videoId = getYouTubeVideoId('https://www.youtube.com/watch?v=dQw4w9WgXcQ'); // Example URL
+    const thumbnailUrl = videoId ? `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg` : null;
+
+    reportCard.innerHTML = `
+        <div class="user-header">
+            <div class="report-header-info">
+                <span class="status-icon blocked"></span>
+                <span class="report-label">Report by -</span>
+                <span class="user-id-highlight">User123</span>
+                <span class="floor-info">Floor: <strong>5</strong></span>
+                <span class="spots-info">Spots: <span class="spot-badge">2</span> <span class="spot-badge">4</span></span>
+            </div>
+            <button class="minimize-btn" onclick="toggleMinimize(this)">
+                <i class="fas fa-chevron-up"></i>
+            </button>
+        </div>
+        <div class="content-preview">
+            <div class="report-reason-container">
+                <span class="reason-label">Reason for report:</span>
+                <span class="reason-value">TLDR56</span>
+            </div>
+            <div class="url-preview">
+                <a href="https://www.youtube.com/watch?v=dQw4w9WgXcQ" target="_blank" class="url-link">
+                    <i class="fas fa-external-link-alt"></i> https://www.youtube.com/watch?v=dQw4w9WgXcQ
+                </a>
+            </div>
+            ${thumbnailUrl ? `
+                <div class="video-thumbnail">
+                    <img src="${thumbnailUrl}" alt="Video Thumbnail" onerror="this.src='https://img.youtube.com/vi/${videoId}/hqdefault.jpg'">
+                    <div class="play-button">
+                        <i class="fas fa-play"></i>
+                    </div>
+                </div>
+            ` : ''}
+        </div>
+        <div class="approval-actions">
+            <button class="approve-btn action-btn" onclick="toggleReportActionPanel(this)">
+                <i class="fas fa-hammer"></i> Take Action
+            </button>
+            <button class="block-btn dismiss-btn" onclick="this.closest('.report-card').remove()">
+                <i class="fas fa-times-circle"></i> Dismiss Report
+            </button>
+        </div>
+        <div class="action-options-panel" style="display: none;">
+            <div class="action-buttons-row">
+                <button class="sub-action-btn suspend" onclick="showActionReason('suspend', this)">
+                    <i class="fas fa-user-slash"></i> Suspend User
+                </button>
+                <button class="sub-action-btn remove" onclick="showActionReason('remove', this)">
+                    <i class="fas fa-trash-alt"></i> Remove Content
+                </button>
+                <button class="sub-action-btn block" onclick="showActionReason('block', this)">
+                    <i class="fas fa-ban"></i> Block User
+                </button>
+            </div>
+            <div class="action-input-container" style="display: none;">
+                <textarea placeholder="Enter reason..." class="reason-input"></textarea>
+                <button class="submit-action-btn" onclick="this.closest('.report-card').remove(); alert('Action completed.')">Confirm Action</button>
+            </div>
+        </div>
+    `;
+
+    // Insert after the h3 title
+    const title = container.querySelector('h3');
+    if (title) {
+        title.after(reportCard);
+    } else {
+        container.appendChild(reportCard);
+    }
+}
+
+function toggleReportActionPanel(button) {
+    const card = button.closest('.report-card');
+    const panel = card.querySelector('.action-options-panel');
+    panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+}
+
+function showActionReason(type, button) {
+    const card = button.closest('.report-card');
+    const inputContainer = card.querySelector('.action-input-container');
+    const textarea = inputContainer.querySelector('textarea');
+
+    inputContainer.style.display = 'block';
+
+    let placeholder = '';
+    switch (type) {
+        case 'suspend': placeholder = 'Enter reason for suspension...'; break;
+        case 'remove': placeholder = 'Enter reason for content removal...'; break;
+        case 'block': placeholder = 'Enter reason for blocking...'; break;
+    }
+    textarea.placeholder = placeholder;
+    textarea.focus();
+}
