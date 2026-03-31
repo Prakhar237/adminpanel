@@ -1,80 +1,56 @@
 // ============================================================
-// TAP24H Admin Panel — Supabase Backend Integration
-// Project: qpchntucxzwbizwlisbb
+// TAP24H Admin Panel — v3 Full Backend Integration
+// Supabase Project: qpchntucxzwbizwlisbb
 // ============================================================
 
 const { createClient } = supabase;
-
-const SUPABASE_URL = 'https://qpchntucxzwbizwlisbb.supabase.co';
+const SUPABASE_URL     = 'https://qpchntucxzwbizwlisbb.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFwY2hudHVjeHp3Yml6d2xpc2JiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ5NDE5NTcsImV4cCI6MjA5MDUxNzk1N30.nV3er_FIqGDeuqR2RV_SXrV8b1NnxqF9vhlwXz9ySoo';
-
-const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+const supabaseClient   = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 // ============================================================
-// LOGIN PAGE
+// MODAL SYSTEM
 // ============================================================
-if (document.getElementById('loginForm')) {
-    document.getElementById('loginForm').addEventListener('submit', function (e) {
-        e.preventDefault();
-        window.location.href = 'dashboard.html';
-    });
+let _modalSubmitCallback = null;
+
+function openModal(title, bodyHtml, onSubmit) {
+    document.getElementById('modalTitle').textContent = title;
+    document.getElementById('modalBody').innerHTML = bodyHtml;
+    _modalSubmitCallback = onSubmit;
+    document.getElementById('adminModal').classList.add('active');
 }
 
-// ============================================================
-// DASHBOARD PAGE INIT
-// ============================================================
-if (document.getElementById('logoutBtn')) {
-    const logoutBtn      = document.getElementById('logoutBtn');
-    const sidebarToggle  = document.getElementById('sidebarToggle');
-    const sidebar        = document.querySelector('.sidebar');
-    const mainContent    = document.querySelector('.main-content');
-    const navLinks       = document.querySelectorAll('.sidebar nav ul li a');
-
-    // Sidebar toggle
-    sidebarToggle.addEventListener('click', function () {
-        sidebar.classList.toggle('collapsed');
-        mainContent.classList.toggle('expanded');
-        const icon = this.querySelector('i');
-        icon.classList.toggle('fa-chevron-left');
-        icon.classList.toggle('fa-chevron-right');
-    });
-
-    // Logout
-    logoutBtn.addEventListener('click', function () {
-        window.location.href = 'index.html';
-    });
-
-    // Sidebar navigation — load section data on click
-    navLinks.forEach(link => {
-        link.addEventListener('click', function (e) {
-            e.preventDefault();
-
-            navLinks.forEach(l => l.parentElement.classList.remove('active'));
-            document.querySelectorAll('.content-section').forEach(s => s.classList.remove('active'));
-
-            this.parentElement.classList.add('active');
-
-            const sectionId = this.getAttribute('href').substring(1);
-            const section = document.getElementById(sectionId);
-            if (section) section.classList.add('active');
-
-            document.querySelector('.header h1').textContent = this.textContent.trim();
-
-            // Load appropriate data
-            switch (sectionId) {
-                case 'dashboard':      loadConnectedUsers();    break;
-                case 'coupons':        loadCouponInventory();   break;
-                case 'reports':        loadUserReports();       break;
-                case 'rewards':        loadUserRewards();       break;
-                case 'approval':       loadAdminApprovals();    break;
-            }
-        });
-    });
-
-    // On page load — load dashboard data immediately
-    loadConnectedUsers();
-    loadDashboardStats();
+function closeModal() {
+    document.getElementById('adminModal').classList.remove('active');
+    _modalSubmitCallback = null;
 }
+
+document.addEventListener('DOMContentLoaded', () => {
+    const submitBtn = document.getElementById('modalSubmitBtn');
+    if (submitBtn) submitBtn.addEventListener('click', () => {
+        if (_modalSubmitCallback) _modalSubmitCallback();
+    });
+
+    // Close modal on overlay click
+    document.getElementById('adminModal').addEventListener('click', e => {
+        if (e.target.id === 'adminModal') closeModal();
+    });
+
+    // Milestones dropdown (kept for compatibility)
+    const dh = document.querySelector('.dropdown-header');
+    const dc = document.querySelector('.dropdown-content');
+    if (dh && dc) dh.addEventListener('click', function() {
+        this.classList.toggle('active');
+        dc.classList.toggle('active');
+    });
+
+    // Close action dropdowns on outside click
+    document.addEventListener('click', e => {
+        if (!e.target.closest('.action-dropdown')) {
+            document.querySelectorAll('.dropdown-menu').forEach(m => m.style.display = 'none');
+        }
+    });
+});
 
 // ============================================================
 // POPUP UTILITY
@@ -93,33 +69,77 @@ function showPopup(msg) {
     document.getElementById('popupOverlay').classList.add('active');
 }
 
-document.addEventListener('DOMContentLoaded', function () {
-    const closePopup    = document.getElementById('closePopup');
-    const popupOverlay  = document.getElementById('popupOverlay');
-    if (closePopup) closePopup.addEventListener('click', () => popupOverlay.classList.remove('active'));
-    if (popupOverlay) popupOverlay.addEventListener('click', e => {
-        if (e.target === popupOverlay) popupOverlay.classList.remove('active');
-    });
-
-    // Milestones dropdown
-    const dropdownHeader  = document.querySelector('.dropdown-header');
-    const dropdownContent = document.querySelector('.dropdown-content');
-    if (dropdownHeader && dropdownContent) {
-        dropdownHeader.addEventListener('click', function () {
-            this.classList.toggle('active');
-            dropdownContent.classList.toggle('active');
-        });
-    }
+document.addEventListener('DOMContentLoaded', () => {
+    const cp = document.getElementById('closePopup');
+    const po = document.getElementById('popupOverlay');
+    if (cp) cp.addEventListener('click', () => po.classList.remove('active'));
+    if (po) po.addEventListener('click', e => { if (e.target === po) po.classList.remove('active'); });
 });
 
 // ============================================================
-// 1. DASHBOARD — Connected Users
+// LOGIN PAGE
+// ============================================================
+if (document.getElementById('loginForm')) {
+    document.getElementById('loginForm').addEventListener('submit', e => {
+        e.preventDefault();
+        window.location.href = 'dashboard.html';
+    });
+}
+
+// ============================================================
+// DASHBOARD INIT
+// ============================================================
+if (document.getElementById('logoutBtn')) {
+    const sidebarToggle = document.getElementById('sidebarToggle');
+    const sidebar       = document.querySelector('.sidebar');
+    const mainContent   = document.querySelector('.main-content');
+    const navLinks      = document.querySelectorAll('.sidebar nav ul li a');
+
+    sidebarToggle.addEventListener('click', function() {
+        sidebar.classList.toggle('collapsed');
+        mainContent.classList.toggle('expanded');
+        const icon = this.querySelector('i');
+        icon.classList.toggle('fa-chevron-left');
+        icon.classList.toggle('fa-chevron-right');
+    });
+
+    document.getElementById('logoutBtn').addEventListener('click', () => {
+        window.location.href = 'index.html';
+    });
+
+    navLinks.forEach(link => {
+        link.addEventListener('click', function(e) {
+            e.preventDefault();
+            navLinks.forEach(l => l.parentElement.classList.remove('active'));
+            document.querySelectorAll('.content-section').forEach(s => s.classList.remove('active'));
+            this.parentElement.classList.add('active');
+            const sectionId = this.getAttribute('href').substring(1);
+            const section = document.getElementById(sectionId);
+            if (section) section.classList.add('active');
+            document.querySelector('.header h1').textContent = this.textContent.trim();
+
+            switch (sectionId) {
+                case 'dashboard':       loadConnectedUsers();   loadDashboardStats(); break;
+                case 'coupons':         loadCouponInventory();  break;
+                case 'reports':         loadUserReports();      break;
+                case 'rewards':         loadUserRewards();      break;
+                case 'approval':        loadAdminApprovals();   break;
+            }
+        });
+    });
+
+    // Initial load
+    loadConnectedUsers();
+    loadDashboardStats();
+}
+
+// ============================================================
+// ROW 1 — CONNECTED USERS
 // ============================================================
 async function loadConnectedUsers() {
-    const tbody = document.querySelector('#dashboard .data-table tbody');
+    const tbody = document.getElementById('connectedUsersBody');
     if (!tbody) return;
-
-    tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;color:#94a3b8;padding:2rem">Loading...</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;color:#94a3b8;padding:2rem">Loading...</td></tr>`;
 
     const { data, error } = await supabaseClient
         .from('connected_users')
@@ -127,98 +147,137 @@ async function loadConnectedUsers() {
         .order('connected_at', { ascending: false });
 
     if (error) {
-        tbody.innerHTML = `<tr><td colspan="4" style="color:#ef4444;text-align:center;padding:2rem">Error: ${error.message}</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="5" style="color:#ef4444;text-align:center;padding:2rem">Error: ${error.message}</td></tr>`;
         return;
     }
-
     if (!data || data.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;color:#94a3b8;padding:2rem">No connected users found.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;color:#94a3b8;padding:2rem">No connected users.</td></tr>`;
         return;
     }
 
-    tbody.innerHTML = data.map(user => `
-        <tr class="user-row">
+    tbody.innerHTML = data.map(user => {
+        const status  = user.status || 'Active';
+        const badgeClass = status === 'Active' ? 'active' : status === 'Suspended' ? 'badge-suspended' : 'badge-blocked';
+        return `
+        <tr>
             <td>${user.email}</td>
             <td>${user.virtual_floor_number}</td>
             <td>${user.country}</td>
+            <td><span class="status-badge ${badgeClass}">${status}</span></td>
             <td>
-                <button class="expand-btn" onclick="toggleUserDetails(this)">
-                    <i class="fas fa-chevron-down"></i>
-                </button>
-            </td>
-        </tr>
-        <tr class="user-details-row" style="display:none;">
-            <td colspan="4">
-                <div class="user-details-expanded">
-                    <div class="details-grid">
-                        <div class="detail-item">
-                            <label>Email:</label>
-                            <span>${user.email}</span>
-                        </div>
-                        <div class="detail-item">
-                            <label>Floor:</label>
-                            <span>${user.virtual_floor_number}</span>
-                        </div>
-                        <div class="detail-item">
-                            <label>Country:</label>
-                            <span>${user.country}</span>
-                        </div>
-                        <div class="detail-item">
-                            <label>Status:</label>
-                            <span class="status-badge ${user.is_active ? 'active' : 'locked'}">${user.is_active ? 'Active' : 'Inactive'}</span>
-                        </div>
-                        <div class="detail-item">
-                            <label>Connected At:</label>
-                            <span>${new Date(user.connected_at).toLocaleString()}</span>
-                        </div>
-                    </div>
-                    <div class="user-actions">
-                        <button class="block-user-btn" onclick="showBlockReason()">
+                <div class="action-dropdown">
+                    <button class="action-trigger-btn" onclick="toggleDropdown(this)">
+                        Actions <i class="fas fa-chevron-down"></i>
+                    </button>
+                    <div class="dropdown-menu" style="display:none;">
+                        <button onclick="openBlockModal('${user.email}')">
                             <i class="fas fa-ban"></i> Block User
                         </button>
-                        <button class="suspend-user-btn" onclick="showSuspendReason()">
+                        <button onclick="openSuspendModal('${user.email}')">
                             <i class="fas fa-pause-circle"></i> Suspend User
                         </button>
-                        <button class="message-user-btn" onclick="sendMessage()">
+                        <button onclick="sendMessageTo('${user.email}')">
                             <i class="fas fa-envelope"></i> Send Message
                         </button>
                     </div>
-                    <div class="action-reason" id="blockReason" style="display:none;">
-                        <textarea placeholder="Enter reason for blocking..." class="reason-input"></textarea>
-                        <button class="submit-reason" onclick="submitBlockReason()">Submit</button>
-                    </div>
-                    <div class="action-reason" id="suspendReason" style="display:none;">
-                        <textarea placeholder="Enter reason for suspension..." class="reason-input"></textarea>
-                        <button class="submit-reason" onclick="submitSuspendReason()">Submit</button>
-                    </div>
                 </div>
             </td>
-        </tr>
-    `).join('');
+        </tr>`;
+    }).join('');
 }
 
-async function loadDashboardStats() {
-    const stats = [
-        { table: 'connected_users', selector: '.stat-card:nth-child(1) .value' },
-        { table: 'coupon_inventory', selector: '.stat-card:nth-child(2) .value' },
-        { table: 'user_rewards', selector: '.stat-card:nth-child(3) .value' },
-    ];
+function toggleDropdown(btn) {
+    const menu = btn.nextElementSibling;
+    document.querySelectorAll('.dropdown-menu').forEach(m => { if (m !== menu) m.style.display = 'none'; });
+    menu.style.display = menu.style.display === 'none' ? 'block' : 'none';
+}
 
-    for (const s of stats) {
-        const { count } = await supabaseClient.from(s.table).select('*', { count: 'exact', head: true });
-        const el = document.querySelector(s.selector);
-        if (el) el.textContent = count ?? 0;
-    }
+// --- Block User ---
+function openBlockModal(email) {
+    openModal('Block User', `
+        <p class="modal-warning"><i class="fas fa-exclamation-triangle"></i> This will <strong>permanently delete all data</strong> for <strong>${email}</strong>.</p>
+        <label class="modal-label">Reason for Blocking</label>
+        <textarea id="blockReasonInput" class="modal-textarea" placeholder="Enter reason for blocking..."></textarea>
+    `, async () => {
+        const reason = document.getElementById('blockReasonInput').value.trim();
+        if (!reason) { alert('Please enter a reason.'); return; }
+        await blockUser(email, reason);
+        closeModal();
+    });
+}
+
+async function blockUser(email, reason) {
+    console.log(`Blocking ${email}: ${reason}`);
+    // Cascade delete across all tables by email
+    await supabaseClient.from('coupon_inventory').delete().eq('email', email);
+    await supabaseClient.from('user_rewards').delete().eq('user_email', email);
+    await supabaseClient.from('user_reports').delete().or(`user_email.eq.${email},reported_by_email.eq.${email}`);
+    await supabaseClient.from('admin_approvals').delete().eq('user_mail', email);
+    const { error } = await supabaseClient.from('connected_users').delete().eq('email', email);
+    if (error) { alert('Error blocking user: ' + error.message); return; }
+    showPopup(`User ${email} has been permanently blocked and all data removed.`);
+    loadConnectedUsers();
+    loadDashboardStats();
+}
+
+// --- Suspend User ---
+function openSuspendModal(email) {
+    openModal('Suspend User', `
+        <p class="modal-info"><i class="fas fa-info-circle"></i> Suspending <strong>${email}</strong>. Their data will be retained.</p>
+        <label class="modal-label">Reason for Suspension</label>
+        <textarea id="suspendReasonInput" class="modal-textarea" placeholder="Enter reason for suspension..."></textarea>
+        <label class="modal-label" style="margin-top:14px;">Duration (Days)</label>
+        <input type="number" id="suspendDaysInput" class="modal-input" placeholder="e.g. 7" min="1" style="width:100%;padding:10px;border:1px solid #e2e8f0;border-radius:6px;font-size:0.875rem;">
+    `, async () => {
+        const reason = document.getElementById('suspendReasonInput').value.trim();
+        const days   = parseInt(document.getElementById('suspendDaysInput').value);
+        if (!reason || !days || days < 1) { alert('Please fill in all fields correctly.'); return; }
+
+        const suspendedUntil = new Date();
+        suspendedUntil.setDate(suspendedUntil.getDate() + days);
+
+        const { error } = await supabaseClient.from('connected_users').update({
+            status:            'Suspended',
+            suspension_reason: reason,
+            suspended_until:   suspendedUntil.toISOString().split('T')[0]
+        }).eq('email', email);
+
+        if (error) { alert('Error: ' + error.message); return; }
+        closeModal();
+        showPopup(`User ${email} has been suspended for ${days} days.`);
+        loadConnectedUsers();
+    });
+}
+
+function sendMessageTo(email) {
+    window.location.href = `mailto:${email}?subject=Message from TAP24H Admin&body=Hello, we would like to discuss your account.`;
 }
 
 // ============================================================
-// 2. COUPON INVENTORY
+// DASHBOARD STATS
+// ============================================================
+async function loadDashboardStats() {
+    const [usersRes, couponsRes, reportsRes] = await Promise.all([
+        supabaseClient.from('connected_users').select('*', { count: 'exact', head: true }),
+        supabaseClient.from('coupon_inventory').select('*', { count: 'exact', head: true }),
+        supabaseClient.from('user_reports').select('*', { count: 'exact', head: true }).eq('status', 'Pending'),
+    ]);
+
+    const tu = document.getElementById('statTotalUsers');
+    const ac = document.getElementById('statActiveCoupons');
+    const pr = document.getElementById('statPendingReports');
+    if (tu) tu.textContent = usersRes.count  ?? 0;
+    if (ac) ac.textContent = couponsRes.count ?? 0;
+    if (pr) pr.textContent = reportsRes.count ?? 0;
+}
+
+// ============================================================
+// ROW 2 — COUPON INVENTORY
 // ============================================================
 async function loadCouponInventory() {
-    const container = document.querySelector('#coupons .assigned-coupons .data-table tbody');
-    if (!container) return;
-
-    container.innerHTML = `<tr><td colspan="4" style="text-align:center;color:#94a3b8;padding:2rem">Loading...</td></tr>`;
+    const tbody = document.getElementById('couponInventoryBody');
+    if (!tbody) return;
+    tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;color:#94a3b8;padding:2rem">Loading...</td></tr>`;
 
     const { data, error } = await supabaseClient
         .from('coupon_inventory')
@@ -226,62 +285,70 @@ async function loadCouponInventory() {
         .order('created_at', { ascending: false });
 
     if (error) {
-        container.innerHTML = `<tr><td colspan="4" style="color:#ef4444;text-align:center;padding:2rem">Error: ${error.message}</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="5" style="color:#ef4444;text-align:center;padding:2rem">Error: ${error.message}</td></tr>`;
         return;
     }
-
     if (!data || data.length === 0) {
-        container.innerHTML = `<tr><td colspan="4" style="text-align:center;color:#94a3b8;padding:2rem">No coupon records found.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;color:#94a3b8;padding:2rem">No coupon records found.</td></tr>`;
         return;
     }
 
-    container.innerHTML = data.map(c => `
+    tbody.innerHTML = data.map(c => {
+        const isRedeemed = c.status === 'Redeemed';
+        return `
         <tr>
             <td>${c.email}</td>
             <td>${c.virtual_floor}</td>
             <td>${c.country}</td>
-            <td><span class="status-badge ${c.status === 'Active' ? 'active' : c.status === 'Redeemed' ? 'approved' : 'pending'}">${c.status}</span></td>
-        </tr>
-    `).join('');
+            <td>${c.coupon
+                ? `<code class="coupon-code-display">${c.coupon}</code>`
+                : `<span style="color:#94a3b8">—</span>`
+            }</td>
+            <td>
+                <span class="status-badge ${isRedeemed ? 'badge-redeemed' : 'badge-not-redeemed'}">
+                    ${isRedeemed ? '✓ Redeemed' : '✗ Not Redeemed'}
+                </span>
+            </td>
+        </tr>`;
+    }).join('');
 }
 
 // ============================================================
-// 3. USER REPORTS
+// ROW 3 — USER REPORTS
 // ============================================================
 async function loadUserReports() {
     const container = document.getElementById('reportsContainer');
     if (!container) return;
 
-    // Keep the h3 title, clear rest
+    // Clear, keep h3
     const title = container.querySelector('h3');
     container.innerHTML = '';
     if (title) container.appendChild(title);
 
-    const loadingEl = document.createElement('div');
-    loadingEl.className = 'no-data-container';
-    loadingEl.innerHTML = `<p style="color:#94a3b8">Loading reports...</p>`;
-    container.appendChild(loadingEl);
+    const loading = document.createElement('div');
+    loading.className = 'no-data-container';
+    loading.innerHTML = `<p style="color:#94a3b8">Loading reports...</p>`;
+    container.appendChild(loading);
 
     const { data, error } = await supabaseClient
         .from('user_reports')
         .select('*')
+        .not('status', 'eq', 'Dismissed')
         .order('created_at', { ascending: false });
 
-    loadingEl.remove();
+    loading.remove();
 
     if (error) {
         container.insertAdjacentHTML('beforeend', `<div class="no-data-container"><p style="color:#ef4444">Error: ${error.message}</p></div>`);
         return;
     }
-
     if (!data || data.length === 0) {
         container.insertAdjacentHTML('beforeend', `
             <div class="no-data-container">
                 <div class="no-data-icon"><i class="fas fa-file-alt"></i></div>
                 <h4>No Reports Found</h4>
-                <p>There are currently no user activity reports available.</p>
-            </div>
-        `);
+                <p>There are currently no pending user reports.</p>
+            </div>`);
         return;
     }
 
@@ -289,19 +356,21 @@ async function loadUserReports() {
 }
 
 function renderReportCard(container, report) {
-    const spots = Array.isArray(report.spot_numbers)
+    const spots = Array.isArray(report.spot_numbers) && report.spot_numbers.length
         ? report.spot_numbers.map(s => `<span class="spot-badge">${s}</span>`).join(' ')
-        : report.spot_numbers;
+        : '<span style="color:#94a3b8">—</span>';
 
     const card = document.createElement('div');
     card.className = 'user-approval-card report-card';
     card.style.animation = 'slideIn 0.3s ease-out';
+    card.dataset.reportId = report.id;
+
     card.innerHTML = `
         <div class="user-header">
             <div class="report-header-info">
                 <span class="status-icon blocked"></span>
-                <span class="report-label">Report by -</span>
-                <span class="user-id-highlight">${report.reported_by_email}</span>
+                <span class="report-label">Reported User:</span>
+                <span class="user-id-highlight">${report.user_email || report.reported_by_email || '—'}</span>
                 <span class="floor-info">Floor: <strong>${report.user_floor}</strong></span>
                 <span class="spots-info">Spots: ${spots}</span>
             </div>
@@ -311,58 +380,114 @@ function renderReportCard(container, report) {
         </div>
         <div class="content-preview">
             <div class="report-reason-container">
+                <span class="reason-label">Reported by:</span>
+                <span style="font-weight:600;color:#1e293b">${report.reported_by_email || '—'}</span>
+            </div>
+            <div class="report-reason-container" style="margin-top:8px;">
                 <span class="reason-label">Reported Content:</span>
-                <span class="reason-value">${report.content}</span>
             </div>
-            <div class="url-preview">
-                ${report.content.startsWith('http') ? `<a href="${report.content}" target="_blank" class="url-link"><i class="fas fa-external-link-alt"></i> ${report.content}</a>` : ''}
-            </div>
+            ${renderSourcePreview(report.content)}
         </div>
         <div class="approval-actions">
             <button class="approve-btn action-btn" onclick="toggleReportActionPanel(this)">
                 <i class="fas fa-hammer"></i> Take Action
             </button>
-            <button class="block-btn dismiss-btn" onclick="updateReportStatus('${report.id}', 'Dismissed', this)">
-                <i class="fas fa-times-circle"></i> Dismiss Report
+            <button class="block-btn dismiss-btn" onclick="dismissReport('${report.id}', this)">
+                <i class="fas fa-times-circle"></i> Dismiss
             </button>
         </div>
         <div class="action-options-panel" style="display:none;">
             <div class="action-buttons-row">
-                <button class="sub-action-btn suspend" onclick="showActionReason('suspend', this)">
+                <button class="sub-action-btn suspend" onclick="reportSuspendUser('${report.user_email || report.reported_by_email}', '${report.id}', this)">
                     <i class="fas fa-user-slash"></i> Suspend User
                 </button>
-                <button class="sub-action-btn remove" onclick="showActionReason('remove', this)">
+                <button class="sub-action-btn remove" onclick="reportRemoveContent('${report.id}', this)">
                     <i class="fas fa-trash-alt"></i> Remove Content
                 </button>
-                <button class="sub-action-btn block" onclick="showActionReason('block', this)">
+                <button class="sub-action-btn block" onclick="reportBlockUser('${report.user_email || report.reported_by_email}', '${report.id}', this)">
                     <i class="fas fa-ban"></i> Block User
                 </button>
             </div>
-            <div class="action-input-container" style="display:none;">
-                <textarea placeholder="Enter reason..." class="reason-input"></textarea>
-                <button class="submit-action-btn" onclick="updateReportStatus('${report.id}', 'Actioned', this)">Confirm Action</button>
-            </div>
-        </div>
-    `;
+        </div>`;
+
     container.appendChild(card);
 }
 
-async function updateReportStatus(id, status, button) {
-    const { error } = await supabaseClient
-        .from('user_reports')
-        .update({ status })
-        .eq('id', id);
-
+async function dismissReport(id, button) {
+    const { error } = await supabaseClient.from('user_reports').update({ status: 'Dismissed' }).eq('id', id);
     if (error) { alert('Error: ' + error.message); return; }
     button.closest('.report-card').remove();
-    showPopup(`Report marked as ${status}.`);
+    showPopup('Report dismissed.');
+}
+
+function reportSuspendUser(email, reportId, button) {
+    openSuspendModal(email);
+}
+
+function reportRemoveContent(reportId, button) {
+    openModal('Remove Content', `
+        <p class="modal-warning"><i class="fas fa-trash-alt"></i> This will remove the reported content and close the report.</p>
+        <label class="modal-label">Reason for Removal</label>
+        <textarea id="removeReasonInput" class="modal-textarea" placeholder="Enter reason for content removal..."></textarea>
+    `, async () => {
+        const reason = document.getElementById('removeReasonInput').value.trim();
+        if (!reason) { alert('Please enter a reason.'); return; }
+        const { error } = await supabaseClient.from('user_reports').update({ status: 'Actioned' }).eq('id', reportId);
+        if (error) { alert('Error: ' + error.message); return; }
+        closeModal();
+        document.querySelector(`[data-report-id="${reportId}"]`)?.remove();
+        showPopup('Content has been removed.');
+    });
+}
+
+function reportBlockUser(email, reportId, button) {
+    openModal('Block User', `
+        <p class="modal-warning"><i class="fas fa-exclamation-triangle"></i> This will <strong>permanently delete all data</strong> for <strong>${email}</strong> and remove this report.</p>
+        <label class="modal-label">Reason for Blocking</label>
+        <textarea id="reportBlockReasonInput" class="modal-textarea" placeholder="Enter reason..."></textarea>
+    `, async () => {
+        const reason = document.getElementById('reportBlockReasonInput').value.trim();
+        if (!reason) { alert('Please enter a reason.'); return; }
+        await blockUser(email, reason);
+        await supabaseClient.from('user_reports').update({ status: 'Actioned' }).eq('id', reportId);
+        closeModal();
+        document.querySelector(`[data-report-id="${reportId}"]`)?.remove();
+    });
+}
+
+function toggleReportActionPanel(button) {
+    const card  = button.closest('.report-card');
+    const panel = card.querySelector('.action-options-panel');
+    panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+}
+
+// Keyboard shortcut: Press '1' in Reports section to add mock report
+document.addEventListener('keydown', e => {
+    const section = document.getElementById('reports');
+    if (e.key === '1' && section && section.classList.contains('active')) addMockReport();
+});
+
+function addMockReport() {
+    const container = document.getElementById('reportsContainer');
+    if (!container) return;
+    const noData = container.querySelector('.no-data-container');
+    if (noData) noData.remove();
+    renderReportCard(container, {
+        id:                'mock-' + Date.now(),
+        reported_by_email: 'reporter@example.com',
+        user_email:        'User123',
+        spot_numbers:      [2, 4],
+        user_floor:        5,
+        content:           'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+        status:            'Pending',
+    });
 }
 
 // ============================================================
-// 4. USER REWARDS
+// ROW 4 — USER REWARDS
 // ============================================================
 async function loadUserRewards() {
-    const container = document.querySelector('#rewards .cyber-card .rewards-container');
+    const container = document.getElementById('rewardsContainer');
     if (!container) return;
 
     const { data, error } = await supabaseClient
@@ -370,29 +495,82 @@ async function loadUserRewards() {
         .select('*')
         .order('accumulated_pvs', { ascending: false });
 
-    if (error || !data || data.length === 0) return;
+    const title = container.querySelector('h3');
+    container.innerHTML = '';
+    if (title) container.appendChild(title);
 
-    // Update the first user card with real data
-    const first = data[0];
-    const emailEl = container.querySelector('.level-info h4');
-    const xpEl    = container.querySelector('.xp-text');
-    const xpBar   = container.querySelector('.xp-progress');
-    const lvlEl   = container.querySelector('.level-number');
+    if (error || !data || data.length === 0) {
+        container.insertAdjacentHTML('beforeend', `
+            <div class="no-data-container">
+                <div class="no-data-icon"><i class="fas fa-gift"></i></div>
+                <h4>No Rewards Data</h4>
+                <p>No user rewards found.</p>
+            </div>`);
+        return;
+    }
 
-    if (emailEl) emailEl.innerHTML = `${first.user_email} <span class="status-blip active"></span>`;
-    if (xpEl)    xpEl.textContent  = `${first.accumulated_pvs} PVs accumulated`;
-    if (xpBar)   xpBar.style.width = `${Math.min((first.accumulated_pvs % 100), 100)}%`;
-    if (lvlEl)   lvlEl.textContent = Math.floor(first.accumulated_pvs / 100) + 1;
+    const tableHtml = `
+        <div class="data-table" style="margin-top:1rem;">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Email</th>
+                        <th>Floor Number</th>
+                        <th>Accumulated PVs</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${data.map(r => `
+                    <tr>
+                        <td>${r.user_email}</td>
+                        <td>${r.floor_number}</td>
+                        <td>
+                            <input
+                                type="number"
+                                class="pv-edit-input"
+                                value="${r.accumulated_pvs}"
+                                data-email="${r.user_email}"
+                                min="0"
+                                onblur="updatePVs(this)"
+                                onkeydown="if(event.key==='Enter'){this.blur()}"
+                            >
+                        </td>
+                    </tr>`).join('')}
+                </tbody>
+            </table>
+        </div>`;
+
+    container.insertAdjacentHTML('beforeend', tableHtml);
+}
+
+async function updatePVs(input) {
+    const email  = input.dataset.email;
+    const newVal = parseInt(input.value);
+    if (isNaN(newVal) || newVal < 0) return;
+
+    // Update user_rewards
+    const { error: e1 } = await supabaseClient
+        .from('user_rewards')
+        .update({ accumulated_pvs: newVal, updated_at: new Date().toISOString() })
+        .eq('user_email', email);
+
+    // Sync to connected_users
+    const { error: e2 } = await supabaseClient
+        .from('connected_users')
+        .update({ accumulated_pvs: newVal })
+        .eq('email', email);
+
+    if (e1 || e2) { alert('Error updating PVs.'); return; }
+    showPopup(`PVs updated to ${newVal} for ${email}`);
 }
 
 // ============================================================
-// 5. ADMIN APPROVAL
+// ROW 5 — ADMIN APPROVAL
 // ============================================================
 async function loadAdminApprovals() {
     const container = document.getElementById('urlApprovalContainer');
     if (!container) return;
-
-    container.innerHTML = `<div class="no-data-container"><p style="color:#94a3b8">Loading approvals...</p></div>`;
+    container.innerHTML = `<p style="color:#94a3b8;text-align:center;padding:2rem">Loading...</p>`;
 
     const { data, error } = await supabaseClient
         .from('admin_approvals')
@@ -403,10 +581,9 @@ async function loadAdminApprovals() {
     container.innerHTML = '';
 
     if (error) {
-        container.innerHTML = `<div class="no-data-container"><p style="color:#ef4444">Error: ${error.message}</p></div>`;
+        container.innerHTML = `<p style="color:#ef4444;text-align:center;padding:2rem">Error: ${error.message}</p>`;
         return;
     }
-
     if (!data || data.length === 0) {
         container.innerHTML = `
             <div class="no-data-container">
@@ -424,16 +601,14 @@ async function loadAdminApprovals() {
 
         const card = document.createElement('div');
         card.className = 'user-approval-card';
+        card.dataset.approvalId = item.id;
         card.innerHTML = `
-            <div class="user-header">
-                <div class="user-info">
-                    <h4><span class="status-icon"></span>${item.user_mail}</h4>
-                    <div class="user-details">
-                        <span>Floor: <strong>${item.user_floor}</strong></span>
-                        <span class="spots-info">Spots: ${spotsHtml}</span>
-                        <span>Submitted: ${new Date(item.submitted_at).toLocaleString()}</span>
-                    </div>
-                </div>
+            <div class="approval-header-row">
+                <span class="status-icon"></span>
+                <span class="approval-email">${item.user_mail}</span>
+                <span class="approval-meta">Floor: <strong>${item.user_floor}</strong></span>
+                <span class="approval-meta spots-info">Spots: ${spotsHtml}</span>
+                <span class="approval-meta">Submitted: ${new Date(item.submitted_at).toLocaleString()}</span>
                 <button class="minimize-btn" onclick="toggleMinimize(this)">
                     <i class="fas fa-chevron-up"></i>
                 </button>
@@ -445,64 +620,113 @@ async function loadAdminApprovals() {
                 ${renderSourcePreview(item.source_link)}
             </div>
             <div class="approval-actions">
-                <button class="approve-btn" onclick="updateApprovalStatus('${item.id}', 'Approved', this)">
+                <button class="approve-btn" onclick="approveRequest('${item.id}', this)">
                     <i class="fas fa-check"></i> Approve
                 </button>
-                <button class="block-btn" onclick="updateApprovalStatus('${item.id}', 'Rejected', this)">
+                <button class="block-btn" onclick="showRejectionPanel('${item.id}', this)">
                     <i class="fas fa-times"></i> Reject
                 </button>
             </div>
-        `;
+            <div class="rejection-panel" style="display:none;">
+                <label class="modal-label" style="display:block;margin-bottom:8px;">Reason for Rejection</label>
+                <textarea class="reason-input rejection-reason-textarea" placeholder="Enter reason for rejection..."></textarea>
+                <button class="submit-action-btn" onclick="submitRejection('${item.id}', this)" style="margin-top:10px;">
+                    Submit Rejection
+                </button>
+            </div>`;
 
         container.appendChild(card);
     });
 }
 
+async function approveRequest(id, button) {
+    const { error } = await supabaseClient
+        .from('admin_approvals')
+        .update({ status: 'Approved', reviewed_at: new Date().toISOString() })
+        .eq('id', id);
+    if (error) { alert('Error: ' + error.message); return; }
+    button.closest('.user-approval-card').remove();
+    showPopup('Request approved.');
+}
+
+function showRejectionPanel(id, button) {
+    const card  = button.closest('.user-approval-card');
+    const panel = card.querySelector('.rejection-panel');
+    panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+}
+
+async function submitRejection(id, button) {
+    const card   = button.closest('.user-approval-card');
+    const reason = card.querySelector('.rejection-reason-textarea').value.trim();
+    if (!reason) { alert('Please enter a reason for rejection.'); return; }
+
+    const { error } = await supabaseClient
+        .from('admin_approvals')
+        .update({
+            status:           'Rejected',
+            rejection_reason: reason,
+            reviewed_at:      new Date().toISOString()
+        })
+        .eq('id', id);
+
+    if (error) { alert('Error: ' + error.message); return; }
+    card.remove();
+    showPopup('Request rejected.');
+}
+
+// Load approvals when nav link clicked
+document.addEventListener('DOMContentLoaded', () => {
+    const approvalLink = document.querySelector('a[href="#approval"]');
+    if (approvalLink) approvalLink.addEventListener('click', loadAdminApprovals);
+});
+
+// ============================================================
+// SHARED UI HELPERS
+// ============================================================
+function toggleMinimize(button) {
+    const card = button.closest('.user-approval-card, .report-card');
+    if (card) {
+        card.classList.toggle('minimized');
+        button.classList.toggle('rotated');
+    }
+}
+
 // ============================================================
 // SOURCE LINK SMART PREVIEW
-// Detects YouTube, image files, or generic URLs
 // ============================================================
 function renderSourcePreview(url) {
-    if (!url) {
-        return `<p style="color:#94a3b8;font-size:0.85rem;margin:8px 0;">
+    if (!url) return `
+        <p style="color:#94a3b8;font-size:0.85rem;margin:8px 0;">
             <i class="fas fa-exclamation-circle" style="color:#f59e0b;margin-right:5px;"></i>No source link provided.
         </p>`;
-    }
 
-    // YouTube detection
     const ytId = getYouTubeVideoId(url);
-    if (ytId) {
-        return `
-            <div class="url-preview">
-                <a href="${url}" target="_blank" class="url-link">
-                    <i class="fas fa-external-link-alt"></i> ${url}
-                </a>
-            </div>
-            <div class="video-thumbnail" style="margin-top:10px;" onclick="window.open('${url}','_blank')">
-                <img src="https://img.youtube.com/vi/${ytId}/maxresdefault.jpg"
-                     alt="YouTube Thumbnail"
-                     onerror="this.src='https://img.youtube.com/vi/${ytId}/hqdefault.jpg'">
-                <div class="play-button"><i class="fas fa-play"></i></div>
-            </div>`;
-    }
+    if (ytId) return `
+        <div class="url-preview">
+            <a href="${url}" target="_blank" class="url-link">
+                <i class="fas fa-external-link-alt"></i> ${url}
+            </a>
+        </div>
+        <div class="video-thumbnail" style="margin-top:10px;cursor:pointer;" onclick="window.open('${url}','_blank')">
+            <img src="https://img.youtube.com/vi/${ytId}/maxresdefault.jpg"
+                 alt="YouTube Thumbnail"
+                 onerror="this.src='https://img.youtube.com/vi/${ytId}/hqdefault.jpg'">
+            <div class="play-button"><i class="fas fa-play"></i></div>
+        </div>`;
 
-    // Image file detection
     const imageExts = /\.(jpg|jpeg|png|gif|webp|svg|bmp)(\?.*)?$/i;
-    if (imageExts.test(url)) {
-        return `
-            <div class="url-preview">
-                <a href="${url}" target="_blank" class="url-link">
-                    <i class="fas fa-external-link-alt"></i> ${url}
-                </a>
-            </div>
-            <div class="source-image-preview" style="margin-top:10px;">
-                <img src="${url}" alt="Content Preview"
-                     style="max-width:100%;max-height:320px;border-radius:8px;border:1px solid #e2e8f0;object-fit:contain;"
-                     onerror="this.style.display='none'">
-            </div>`;
-    }
+    if (imageExts.test(url)) return `
+        <div class="url-preview">
+            <a href="${url}" target="_blank" class="url-link">
+                <i class="fas fa-external-link-alt"></i> ${url}
+            </a>
+        </div>
+        <div style="margin-top:10px;">
+            <img src="${url}" alt="Content Preview"
+                 style="max-width:100%;max-height:320px;border-radius:8px;border:1px solid #e2e8f0;object-fit:contain;"
+                 onerror="this.style.display='none'">
+        </div>`;
 
-    // Generic link fallback
     return `
         <div class="url-preview">
             <a href="${url}" target="_blank" class="url-link">
@@ -511,154 +735,32 @@ function renderSourcePreview(url) {
         </div>
         <div style="margin-top:8px;padding:12px;background:#f8fafc;border-radius:6px;border:1px solid #e2e8f0;">
             <i class="fas fa-link" style="color:#94a3b8;margin-right:6px;"></i>
-            <span style="color:#64748b;font-size:0.85rem;">Click the link above to preview the content in a new tab.</span>
+            <span style="color:#64748b;font-size:0.85rem;">Click the link above to view the content.</span>
         </div>`;
 }
 
-async function updateApprovalStatus(id, status, button) {
-    const { error } = await supabaseClient
-        .from('admin_approvals')
-        .update({ status, reviewed_at: new Date().toISOString() })
-        .eq('id', id);
-
-    if (error) { alert('Error: ' + error.message); return; }
-    button.closest('.user-approval-card').remove();
-    showPopup(`Request has been ${status.toLowerCase()}.`);
-}
-
-// Also load approvals when clicking the approval nav link
-document.addEventListener('DOMContentLoaded', function () {
-    const approvalLink = document.querySelector('a[href="#approval"]');
-    if (approvalLink) {
-        approvalLink.addEventListener('click', loadAdminApprovals);
-    }
-});
-
-// ============================================================
-// UI HELPERS
-// ============================================================
-function toggleMinimize(button) {
-    const card = button.closest('.user-approval-card');
-    card.classList.toggle('minimized');
-    button.classList.toggle('rotated');
-}
-
-function toggleUserDetails(button) {
-    const userRow    = button.closest('tr');
-    const detailsRow = userRow.nextElementSibling;
-    button.classList.toggle('rotated');
-    detailsRow.style.display = detailsRow.style.display === 'none' ? 'table-row' : 'none';
-}
-
-function showBlockReason() {
-    document.getElementById('blockReason').style.display = 'block';
-    document.getElementById('suspendReason').style.display = 'none';
-}
-
-function showSuspendReason() {
-    document.getElementById('suspendReason').style.display = 'block';
-    document.getElementById('blockReason').style.display = 'none';
-}
-
-function submitBlockReason() {
-    const input = document.querySelector('#blockReason .reason-input');
-    if (input && input.value.trim()) {
-        alert('User has been blocked.');
-        document.getElementById('blockReason').style.display = 'none';
-    } else {
-        alert('Please enter a reason for blocking.');
-    }
-}
-
-function submitSuspendReason() {
-    const input = document.querySelector('#suspendReason .reason-input');
-    if (input && input.value.trim()) {
-        alert('User has been suspended.');
-        document.getElementById('suspendReason').style.display = 'none';
-    } else {
-        alert('Please enter a reason for suspension.');
-    }
-}
-
-function sendMessage() {
-    const mailtoLink = `mailto:admin@tap24h.com?subject=Message from TAP24H Admin&body=Hello, we would like to discuss your account.`;
-    window.location.href = mailtoLink;
-}
-
-function toggleReportActionPanel(button) {
-    const card  = button.closest('.report-card');
-    const panel = card.querySelector('.action-options-panel');
-    panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
-}
-
-function showActionReason(type, button) {
-    const card           = button.closest('.report-card');
-    const inputContainer = card.querySelector('.action-input-container');
-    const textarea       = inputContainer.querySelector('textarea');
-
-    inputContainer.style.display = 'block';
-
-    const placeholders = {
-        suspend: 'Enter reason for suspension...',
-        remove:  'Enter reason for content removal...',
-        block:   'Enter reason for blocking...',
-    };
-    textarea.placeholder = placeholders[type] || 'Enter reason...';
-    textarea.focus();
+function getYouTubeVideoId(url) {
+    if (!url) return null;
+    const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
+    const match  = url.match(regExp);
+    return (match && match[2].length === 11) ? match[2] : null;
 }
 
 // ============================================================
-// KEYBOARD SHORTCUT — Press '1' in Reports to add mock report
-// ============================================================
-document.addEventListener('keydown', function (e) {
-    const reportsSection = document.getElementById('reports');
-    if (e.key === '1' && reportsSection && reportsSection.classList.contains('active')) {
-        addMockReport();
-    }
-});
-
-function addMockReport() {
-    const container = document.getElementById('reportsContainer');
-    if (!container) return;
-
-    const noData = container.querySelector('.no-data-container');
-    if (noData) noData.remove();
-
-    const mockReport = {
-        id: 'mock-' + Date.now(),
-        reported_by_email: 'User123',
-        spot_numbers: [2, 4],
-        user_floor: 5,
-        content: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
-        status: 'Pending',
-        created_at: new Date().toISOString()
-    };
-
-    renderReportCard(container, mockReport);
-}
-
-// ============================================================
-// COUPON GENERATOR (kept as UI-only feature)
+// COUPON GENERATOR (UI only)
 // ============================================================
 const generationLimits = { video: 0, image: 0, asset: 0 };
 
 function generateCoupons(type) {
     if (generationLimits[type] >= 2) { showWarningMessage(type); return; }
-
     const container = document.getElementById(`${type}Coupons`);
     if (!container) return;
-
     generateUniqueCodes(5).forEach(code => {
         const el = document.createElement('div');
         el.className = 'coupon-code';
-        el.innerHTML = `
-            <span>${code}</span>
-            <button class="copy-btn" onclick="copyToClipboard('${code}')">
-                <i class="fas fa-copy"></i>
-            </button>`;
+        el.innerHTML = `<span>${code}</span><button class="copy-btn" onclick="copyToClipboard('${code}')"><i class="fas fa-copy"></i></button>`;
         container.appendChild(el);
     });
-
     generationLimits[type]++;
     updateGenerateButton(type);
 }
@@ -668,10 +770,7 @@ function showWarningMessage(type) {
     if (!container) return;
     const warn = document.createElement('div');
     warn.className = 'warning-message';
-    warn.innerHTML = `
-        <i class="fas fa-exclamation-triangle"></i>
-        <span>More coupons can only be generated once previous ones are redeemed</span>
-        <button class="close-warning" onclick="this.parentElement.remove()"><i class="fas fa-times"></i></button>`;
+    warn.innerHTML = `<i class="fas fa-exclamation-triangle"></i><span>More coupons can only be generated once previous ones are redeemed</span><button class="close-warning" onclick="this.parentElement.remove()"><i class="fas fa-times"></i></button>`;
     container.parentElement.insertBefore(warn, container.parentElement.firstChild);
 }
 
@@ -679,28 +778,17 @@ function updateGenerateButton(type) {
     const container = document.getElementById(`${type}Coupons`);
     if (!container) return;
     const btn = container.parentElement.querySelector('.generate-btn');
-    if (btn && generationLimits[type] >= 2) {
-        btn.disabled = true;
-        btn.style.opacity = '0.5';
-        btn.style.cursor = 'not-allowed';
-    }
+    if (btn && generationLimits[type] >= 2) { btn.disabled = true; btn.style.opacity = '0.5'; btn.style.cursor = 'not-allowed'; }
 }
 
 function generateUniqueCodes(count) {
-    const codes = new Set();
-    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-    while (codes.size < count) {
-        let code = '';
-        for (let i = 0; i < 6; i++) code += chars.charAt(Math.floor(Math.random() * chars.length));
-        codes.add(code);
-    }
+    const codes = new Set(), chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    while (codes.size < count) { let c = ''; for (let i = 0; i < 6; i++) c += chars[Math.floor(Math.random() * chars.length)]; codes.add(c); }
     return Array.from(codes);
 }
 
 function copyToClipboard(text) {
-    navigator.clipboard.writeText(text)
-        .then(() => showPopup('Code copied to clipboard!'))
-        .catch(err => console.error('Copy failed:', err));
+    navigator.clipboard.writeText(text).then(() => showPopup('Copied to clipboard!')).catch(console.error);
 }
 
 function switchTab(tabId) {
@@ -710,13 +798,4 @@ function switchTab(tabId) {
     if (tab) tab.classList.add('active');
     const btn = document.querySelector(`[onclick="switchTab('${tabId}')"]`);
     if (btn) btn.classList.add('active');
-}
-
-// ============================================================
-// YOUTUBE HELPERS (kept for report card previews)
-// ============================================================
-function getYouTubeVideoId(url) {
-    const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
-    const match  = url.match(regExp);
-    return (match && match[2].length === 11) ? match[2] : null;
 }
