@@ -418,6 +418,10 @@ async function loadAdminApprovals() {
     }
 
     data.forEach(item => {
+        const spotsHtml = Array.isArray(item.spot_numbers) && item.spot_numbers.length
+            ? item.spot_numbers.map(s => `<span class="spot-badge">${s}</span>`).join(' ')
+            : '<span style="color:#94a3b8">—</span>';
+
         const card = document.createElement('div');
         card.className = 'user-approval-card';
         card.innerHTML = `
@@ -426,7 +430,7 @@ async function loadAdminApprovals() {
                     <h4><span class="status-icon"></span>${item.user_mail}</h4>
                     <div class="user-details">
                         <span>Floor: <strong>${item.user_floor}</strong></span>
-                        <span>Spot: <span class="spot-badge">${item.spot_number}</span></span>
+                        <span class="spots-info">Spots: ${spotsHtml}</span>
                         <span>Submitted: ${new Date(item.submitted_at).toLocaleString()}</span>
                     </div>
                 </div>
@@ -434,22 +438,12 @@ async function loadAdminApprovals() {
                     <i class="fas fa-chevron-up"></i>
                 </button>
             </div>
-            ${item.source_link ? `
             <div class="content-preview">
                 <div class="report-reason-container">
                     <span class="reason-label">Content for Review:</span>
                 </div>
-                <div class="url-preview">
-                    <a href="${item.source_link}" target="_blank" class="url-link">
-                        <i class="fas fa-external-link-alt"></i> ${item.source_link}
-                    </a>
-                </div>
-            </div>` : `
-            <div class="content-preview">
-                <p style="color:#94a3b8;font-size:0.85rem;margin:8px 0 0;">
-                    <i class="fas fa-exclamation-circle" style="color:#f59e0b;margin-right:5px;"></i>No source link provided.
-                </p>
-            </div>`}
+                ${renderSourcePreview(item.source_link)}
+            </div>
             <div class="approval-actions">
                 <button class="approve-btn" onclick="updateApprovalStatus('${item.id}', 'Approved', this)">
                     <i class="fas fa-check"></i> Approve
@@ -462,6 +456,63 @@ async function loadAdminApprovals() {
 
         container.appendChild(card);
     });
+}
+
+// ============================================================
+// SOURCE LINK SMART PREVIEW
+// Detects YouTube, image files, or generic URLs
+// ============================================================
+function renderSourcePreview(url) {
+    if (!url) {
+        return `<p style="color:#94a3b8;font-size:0.85rem;margin:8px 0;">
+            <i class="fas fa-exclamation-circle" style="color:#f59e0b;margin-right:5px;"></i>No source link provided.
+        </p>`;
+    }
+
+    // YouTube detection
+    const ytId = getYouTubeVideoId(url);
+    if (ytId) {
+        return `
+            <div class="url-preview">
+                <a href="${url}" target="_blank" class="url-link">
+                    <i class="fas fa-external-link-alt"></i> ${url}
+                </a>
+            </div>
+            <div class="video-thumbnail" style="margin-top:10px;" onclick="window.open('${url}','_blank')">
+                <img src="https://img.youtube.com/vi/${ytId}/maxresdefault.jpg"
+                     alt="YouTube Thumbnail"
+                     onerror="this.src='https://img.youtube.com/vi/${ytId}/hqdefault.jpg'">
+                <div class="play-button"><i class="fas fa-play"></i></div>
+            </div>`;
+    }
+
+    // Image file detection
+    const imageExts = /\.(jpg|jpeg|png|gif|webp|svg|bmp)(\?.*)?$/i;
+    if (imageExts.test(url)) {
+        return `
+            <div class="url-preview">
+                <a href="${url}" target="_blank" class="url-link">
+                    <i class="fas fa-external-link-alt"></i> ${url}
+                </a>
+            </div>
+            <div class="source-image-preview" style="margin-top:10px;">
+                <img src="${url}" alt="Content Preview"
+                     style="max-width:100%;max-height:320px;border-radius:8px;border:1px solid #e2e8f0;object-fit:contain;"
+                     onerror="this.style.display='none'">
+            </div>`;
+    }
+
+    // Generic link fallback
+    return `
+        <div class="url-preview">
+            <a href="${url}" target="_blank" class="url-link">
+                <i class="fas fa-external-link-alt"></i> ${url}
+            </a>
+        </div>
+        <div style="margin-top:8px;padding:12px;background:#f8fafc;border-radius:6px;border:1px solid #e2e8f0;">
+            <i class="fas fa-link" style="color:#94a3b8;margin-right:6px;"></i>
+            <span style="color:#64748b;font-size:0.85rem;">Click the link above to preview the content in a new tab.</span>
+        </div>`;
 }
 
 async function updateApprovalStatus(id, status, button) {
