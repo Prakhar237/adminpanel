@@ -434,6 +434,22 @@ async function loadAdminApprovals() {
                     <i class="fas fa-chevron-up"></i>
                 </button>
             </div>
+            ${item.source_link ? `
+            <div class="content-preview">
+                <div class="report-reason-container">
+                    <span class="reason-label">Content for Review:</span>
+                </div>
+                <div class="url-preview">
+                    <a href="${item.source_link}" target="_blank" class="url-link">
+                        <i class="fas fa-external-link-alt"></i> ${item.source_link}
+                    </a>
+                </div>
+            </div>` : `
+            <div class="content-preview">
+                <p style="color:#94a3b8;font-size:0.85rem;margin:8px 0 0;">
+                    <i class="fas fa-exclamation-circle" style="color:#f59e0b;margin-right:5px;"></i>No source link provided.
+                </p>
+            </div>`}
             <div class="approval-actions">
                 <button class="approve-btn" onclick="updateApprovalStatus('${item.id}', 'Approved', this)">
                     <i class="fas fa-check"></i> Approve
@@ -443,6 +459,7 @@ async function loadAdminApprovals() {
                 </button>
             </div>
         `;
+
         container.appendChild(card);
     });
 }
