@@ -158,13 +158,15 @@ async function loadConnectedUsers() {
     tbody.innerHTML = data.map(user => {
         const status  = user.status || 'Active';
         const badgeClass = status === 'Active' ? 'active' : status === 'Suspended' ? 'badge-suspended' : 'badge-blocked';
-        return `
-        <tr>
-            <td>${user.email}</td>
-            <td>${user.virtual_floor_number}</td>
-            <td>${user.country}</td>
-            <td><span class="status-badge ${badgeClass}">${status}</span></td>
-            <td>
+        let actionsMenu = '';
+        if (status === 'Blocked') {
+            actionsMenu = `<span style="color:#94a3b8;font-size:0.875rem;padding:0.5rem;">Blocked</span>`;
+        } else {
+            const suspendOrRevokeBtn = status === 'Suspended'
+                ? `<button onclick="openRevokeModal('${user.email}')"><i class="fas fa-play-circle"></i> Revoke Suspension</button>`
+                : `<button onclick="openSuspendModal('${user.email}')"><i class="fas fa-pause-circle"></i> Suspend User</button>`;
+                
+            actionsMenu = `
                 <div class="action-dropdown">
                     <button class="action-trigger-btn" onclick="toggleDropdown(this)">
                         Actions <i class="fas fa-chevron-down"></i>
@@ -173,15 +175,21 @@ async function loadConnectedUsers() {
                         <button onclick="openBlockModal('${user.email}')">
                             <i class="fas fa-ban"></i> Block User
                         </button>
-                        <button onclick="openSuspendModal('${user.email}')">
-                            <i class="fas fa-pause-circle"></i> Suspend User
-                        </button>
+                        ${suspendOrRevokeBtn}
                         <button onclick="sendMessageTo('${user.email}')">
                             <i class="fas fa-envelope"></i> Send Message
                         </button>
                     </div>
-                </div>
-            </td>
+                </div>`;
+        }
+
+        return `
+        <tr>
+            <td>${user.email}</td>
+            <td>${user.virtual_floor_number}</td>
+            <td>${user.country}</td>
+            <td><span class="status-badge ${badgeClass}">${status}</span></td>
+            <td>${actionsMenu}</td>
         </tr>`;
     }).join('');
 }
@@ -249,8 +257,63 @@ function openSuspendModal(email) {
     });
 }
 
+// --- Revoke Suspension ---
+function openRevokeModal(email) {
+    openModal('Revoke Suspension', `
+        <p class="modal-info"><i class="fas fa-play-circle"></i> Allow <strong>${email}</strong> to be active again.</p>
+        <label class="modal-label">Reason for Revoking</label>
+        <textarea id="revokeReasonInput" class="modal-textarea" placeholder="Enter reason (e.g. Appeal approved)..."></textarea>
+    `, async () => {
+        const reason = document.getElementById('revokeReasonInput').value.trim();
+        if (!reason) { alert('Please enter a reason.'); return; }
+
+        const { error } = await supabaseClient.from('connected_users').update({
+            status:            'Active',
+            suspension_reason: 'Revoked: ' + reason,
+            suspended_until:   null
+        }).eq('email', email);
+
+        if (error) { alert('Error: ' + error.message); return; }
+        closeModal();
+        showPopup(`Suspension revoked for user ${email}.`);
+        loadConnectedUsers();
+    });
+}
+
 function sendMessageTo(email) {
-    window.location.href = `mailto:${email}?subject=Message from TAP24H Admin&body=Hello, we would like to discuss your account.`;
+    openModal('Send Message', `
+        <p class="modal-info"><i class="fas fa-paper-plane"></i> Send an email directly to <strong>${email}</strong>.</p>
+        <label class="modal-label" style="margin-top:14px;">Subject</label>
+        <input type="text" id="emailSubjectInput" class="modal-input" placeholder="Message from TAP24H Admin" value="Message from TAP24H Admin" style="width:100%;padding:10px;border:1px solid #e2e8f0;border-radius:6px;font-size:0.875rem;margin-bottom:10px;">
+        <label class="modal-label">Message</label>
+        <textarea id="emailMessageInput" class="modal-textarea" placeholder="Type your message here..." style="min-height:100px;"></textarea>
+    `, async () => {
+        const subject = document.getElementById('emailSubjectInput').value.trim();
+        const message = document.getElementById('emailMessageInput').value.trim();
+        
+        if (!message) { alert('Please enter a message to send.'); return; }
+        
+        const btn = document.getElementById('modalSubmitBtn');
+        const oldText = btn.innerHTML;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending...';
+        btn.disabled = true;
+
+        try {
+            const { data, error } = await supabaseClient.functions.invoke('send-email', {
+                body: { email, subject, message }
+            });
+
+            if (error) throw error;
+            
+            showPopup('Email sent successfully to ' + email);
+            closeModal();
+        } catch (err) {
+            alert('Failed to send email: ' + err.message);
+        } finally {
+            btn.innerHTML = oldText;
+            btn.disabled = false;
+        }
+    });
 }
 
 // ============================================================
