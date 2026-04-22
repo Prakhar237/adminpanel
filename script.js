@@ -798,11 +798,7 @@ async function submitRejection(id, button) {
     showPopup('Request rejected.');
 }
 
-// Load approvals when nav link clicked
-document.addEventListener('DOMContentLoaded', () => {
-    const approvalLink = document.querySelector('a[href="#approval"]');
-    if (approvalLink) approvalLink.addEventListener('click', loadAdminApprovals);
-});
+
 
 // ============================================================
 // SHARED UI HELPERS
