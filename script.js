@@ -671,10 +671,13 @@ async function loadAdminApprovals() {
         return;
     }
 
+    const emails = [...new Set(data.map(d => d.user_mail))];
+    const { data: usersData } = await supabaseClient.from('connected_users').select('email, country').in('email', emails);
+    const countryMap = {};
+    if (usersData) usersData.forEach(u => countryMap[u.email] = u.country || 'Unknown');
+
     data.forEach(item => {
-        const spotsHtml = Array.isArray(item.spot_numbers) && item.spot_numbers.length
-            ? item.spot_numbers.map(s => `<span class="spot-badge">${s}</span>`).join(' ')
-            : '<span style="color:#94a3b8">—</span>';
+        const userCountry = countryMap[item.user_mail] || 'Unknown';
 
         const card = document.createElement('div');
         card.className = 'user-approval-card';
@@ -683,8 +686,7 @@ async function loadAdminApprovals() {
             <div class="approval-header-row">
                 <span class="status-icon"></span>
                 <span class="approval-email">${item.user_mail}</span>
-                <span class="approval-meta">Floor: <strong>${item.user_floor}</strong></span>
-                <span class="approval-meta spots-info">Spots: ${spotsHtml}</span>
+                <span class="approval-meta">Country: <strong>${userCountry}</strong></span>
                 <span class="approval-meta">Submitted: ${new Date(item.submitted_at).toLocaleString()}</span>
                 <button class="minimize-btn" onclick="toggleMinimize(this)">
                     <i class="fas fa-chevron-up"></i>
@@ -697,7 +699,7 @@ async function loadAdminApprovals() {
                 ${renderSourcePreview(item.source_link)}
             </div>
             <div class="approval-actions">
-                <button class="approve-btn" onclick="approveRequest('${item.id}', this)">
+                <button class="approve-btn" onclick="openApproveModal('${item.id}', '${item.user_mail}')">
                     <i class="fas fa-check"></i> Approve
                 </button>
                 <button class="block-btn" onclick="showRejectionPanel('${item.id}', this)">
@@ -716,14 +718,56 @@ async function loadAdminApprovals() {
     });
 }
 
-async function approveRequest(id, button) {
-    const { error } = await supabaseClient
-        .from('admin_approvals')
-        .update({ status: 'Approved', reviewed_at: new Date().toISOString() })
-        .eq('id', id);
-    if (error) { alert('Error: ' + error.message); return; }
-    button.closest('.user-approval-card').remove();
-    showPopup('Request approved.');
+function openApproveModal(id, email) {
+    openModal('Send Coupon & Approve', `
+        <label class="modal-label" style="display:block;margin-bottom:8px;">Email Message</label>
+        <textarea id="approveMessageInput" class="modal-textarea" style="min-height:80px; margin-bottom:15px; width:100%; box-sizing:border-box;">Hey User Please find your coupon attached for streaming content in Tap 24 Virtual World</textarea>
+        
+        <label class="modal-label" style="display:block;margin-bottom:8px;">Please enter coupon for user</label>
+        <div style="display:flex; gap:10px; align-items:center;">
+            <input type="text" id="approveCouponInput" class="modal-input" placeholder="Enter coupon here..." style="flex:1; padding:10px; border:1px solid #e2e8f0; border-radius:6px; font-size:0.875rem;">
+            <button class="action-btn" style="padding:10px 15px; border-radius:6px; background:#f1f5f9; color:#475569; border:1px solid #cbd5e1; cursor:pointer;" onclick="closeModal(); document.querySelector(&quot;a[href='#coupons']&quot;).click();">Get new coupon ?</button>
+        </div>
+    `, async () => {
+        const message = document.getElementById('approveMessageInput').value.trim();
+        const coupon = document.getElementById('approveCouponInput').value.trim();
+        
+        if (!message || !coupon) { alert('Please enter both a message and a coupon code.'); return; }
+        
+        const btn = document.getElementById('modalSubmitBtn');
+        const oldText = btn.innerHTML;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending...';
+        btn.disabled = true;
+
+        try {
+            // Note: Use straight concat here to avoid nested backtick escaping issues
+            const finalMessage = message + "\\n\\nYour Coupon Code: " + coupon;
+            
+            // Mark request as Approved
+            const { error: dbError } = await supabaseClient.from('admin_approvals')
+                .update({ status: 'Approved', reviewed_at: new Date().toISOString() })
+                .eq('id', id);
+            if (dbError) throw dbError;
+
+            // Send Email
+            const { error: fnError } = await supabaseClient.functions.invoke('send-email', {
+                body: { email: email, subject: 'Your Request is Approved!', message: finalMessage }
+            });
+            if (fnError) console.error("Email send failed:", fnError);
+
+            showPopup('Coupon Sent to user for redemption');
+            closeModal();
+            
+            const card = document.querySelector('.user-approval-card[data-approval-id="' + id + '"]');
+            if (card) card.remove();
+            
+        } catch (err) {
+            alert('Error: ' + err.message);
+        } finally {
+            btn.innerHTML = oldText;
+            btn.disabled = false;
+        }
+    });
 }
 
 function showRejectionPanel(id, button) {
