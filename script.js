@@ -825,6 +825,19 @@ function renderSourcePreview(url) {
             <i class="fas fa-exclamation-circle" style="color:#f59e0b;margin-right:5px;"></i>No source link provided.
         </p>`;
 
+    const trimmedStr = url.trim();
+    if (trimmedStr.toLowerCase().startsWith('<model-viewer')) {
+        // Fix relative paths from modelviewer.dev documentation examples
+        const fixedHtml = trimmedStr.replace(/(src|poster|environment-image)="shared-assets\//g, '$1="https://modelviewer.dev/shared-assets/');
+        return `
+        <div style="margin-top:10px; width:100%; height:300px; background:#0f172a; border-radius:8px; border:1px solid #334155; overflow:hidden;">
+            ${fixedHtml.replace('<model-viewer', '<model-viewer style="width:100%;height:100%;"')}
+        </div>
+        <div class="url-preview" style="margin-top:8px;">
+             <span style="color:#64748b;font-size:0.75rem;"><i class="fas fa-cube" style="margin-right:5px;"></i>Interactive 3D Model Card</span>
+        </div>`;
+    }
+
     const safeUrl = escapeHtml(url);
 
     const ytId = getYouTubeVideoId(url);
