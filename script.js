@@ -814,43 +814,61 @@ function toggleMinimize(button) {
 // ============================================================
 // SOURCE LINK SMART PREVIEW
 // ============================================================
+function escapeHtml(unsafe) {
+    if (!unsafe) return '';
+    return unsafe.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+}
+
 function renderSourcePreview(url) {
     if (!url) return `
         <p style="color:#94a3b8;font-size:0.85rem;margin:8px 0;">
             <i class="fas fa-exclamation-circle" style="color:#f59e0b;margin-right:5px;"></i>No source link provided.
         </p>`;
 
+    const safeUrl = escapeHtml(url);
+
     const ytId = getYouTubeVideoId(url);
     if (ytId) return `
         <div class="url-preview">
-            <a href="${url}" target="_blank" class="url-link">
-                <i class="fas fa-external-link-alt"></i> ${url}
+            <a href="${safeUrl}" target="_blank" class="url-link">
+                <i class="fas fa-external-link-alt"></i> ${safeUrl}
             </a>
         </div>
-        <div class="video-thumbnail" style="margin-top:10px;cursor:pointer;" onclick="window.open('${url}','_blank')">
+        <div class="video-thumbnail" style="margin-top:10px;cursor:pointer;" onclick="window.open('${safeUrl}','_blank')">
             <img src="https://img.youtube.com/vi/${ytId}/maxresdefault.jpg"
                  alt="YouTube Thumbnail"
                  onerror="this.src='https://img.youtube.com/vi/${ytId}/hqdefault.jpg'">
             <div class="play-button"><i class="fas fa-play"></i></div>
         </div>`;
 
+    const modelExts = /\.(glb|gltf)(\?.*)?$/i;
+    if (modelExts.test(url)) return `
+        <div class="url-preview">
+            <a href="${safeUrl}" target="_blank" class="url-link">
+                <i class="fas fa-external-link-alt"></i> ${safeUrl}
+            </a>
+        </div>
+        <div style="margin-top:10px; width:100%; height:250px; background:#f8fafc; border-radius:8px; border:1px solid #e2e8f0; overflow:hidden;">
+            <model-viewer src="${safeUrl}" auto-rotate camera-controls style="width:100%; height:100%;"></model-viewer>
+        </div>`;
+
     const imageExts = /\.(jpg|jpeg|png|gif|webp|svg|bmp)(\?.*)?$/i;
     if (imageExts.test(url)) return `
         <div class="url-preview">
-            <a href="${url}" target="_blank" class="url-link">
-                <i class="fas fa-external-link-alt"></i> ${url}
+            <a href="${safeUrl}" target="_blank" class="url-link">
+                <i class="fas fa-external-link-alt"></i> ${safeUrl}
             </a>
         </div>
         <div style="margin-top:10px;">
-            <img src="${url}" alt="Content Preview"
+            <img src="${safeUrl}" alt="Content Preview"
                  style="max-width:100%;max-height:320px;border-radius:8px;border:1px solid #e2e8f0;object-fit:contain;"
                  onerror="this.style.display='none'">
         </div>`;
 
     return `
         <div class="url-preview">
-            <a href="${url}" target="_blank" class="url-link">
-                <i class="fas fa-external-link-alt"></i> ${url}
+            <a href="${safeUrl}" target="_blank" class="url-link">
+                <i class="fas fa-external-link-alt"></i> ${safeUrl}
             </a>
         </div>
         <div style="margin-top:8px;padding:12px;background:#f8fafc;border-radius:6px;border:1px solid #e2e8f0;">
