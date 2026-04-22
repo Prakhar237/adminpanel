@@ -85,7 +85,7 @@ if (document.getElementById('loginForm')) {
         const u = document.getElementById('username').value.trim();
         const p = document.getElementById('password').value;
         
-        if (u === 'Admin@fiverr.com' && p === 'Admin#257@12') {
+        if (u === 'Admin@vibing.com' && p === 'Admin#257@12') {
             sessionStorage.setItem('isAdminAuthenticated', 'true');
             window.location.href = 'dashboard.html';
         } else {
