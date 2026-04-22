@@ -723,10 +723,10 @@ function openApproveModal(id, email) {
         <label class="modal-label" style="display:block;margin-bottom:8px;">Email Message</label>
         <textarea id="approveMessageInput" class="modal-textarea" style="min-height:80px; margin-bottom:15px; width:100%; box-sizing:border-box;">Hey User Please find your coupon attached for streaming content in Tap 24 Virtual World</textarea>
         
-        <label class="modal-label" style="display:block;margin-bottom:8px;">Please enter coupon for user</label>
-        <div style="display:flex; gap:10px; align-items:center;">
-            <input type="text" id="approveCouponInput" class="modal-input" placeholder="Enter coupon here..." style="flex:1; padding:10px; border:1px solid #e2e8f0; border-radius:6px; font-size:0.875rem;">
-            <button class="action-btn" style="padding:10px 15px; border-radius:6px; background:#f1f5f9; color:#475569; border:1px solid #cbd5e1; cursor:pointer;" onclick="closeModal(); document.querySelector(&quot;a[href='#coupons']&quot;).click();">Get new coupon ?</button>
+        <label class="modal-label" style="display:block;margin-bottom:6px;">Please enter coupon for user</label>
+        <input type="text" id="approveCouponInput" class="modal-input" placeholder="Enter coupon code here..." style="width:100%; padding:12px 14px; border:1px solid #e2e8f0; border-radius:8px; font-size:0.95rem; box-sizing:border-box; margin-bottom:8px;">
+        <div style="text-align:right;">
+            <button style="padding:5px 12px; border-radius:5px; background:transparent; color:#3b82f6; border:1px solid #3b82f6; cursor:pointer; font-size:0.8rem; white-space:nowrap;" onclick="closeModal(); document.querySelector(&quot;a[href='#coupon-generator']&quot;).click();">🎟️ Get new coupon?</button>
         </div>
     `, async () => {
         const message = document.getElementById('approveMessageInput').value.trim();
