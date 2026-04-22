@@ -869,7 +869,7 @@ function getYouTubeVideoId(url) {
 // ============================================================
 // COUPON GENERATOR (UI only)
 // ============================================================
-const generationLimits = { video: 0, image: 0, asset: 0 };
+const generationLimits = { video: 0, image: 0, asset: 0, link: 0 };
 
 function generateCoupons(type) {
     if (generationLimits[type] >= 2) { showWarningMessage(type); return; }
