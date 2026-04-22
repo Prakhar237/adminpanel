@@ -82,7 +82,15 @@ document.addEventListener('DOMContentLoaded', () => {
 if (document.getElementById('loginForm')) {
     document.getElementById('loginForm').addEventListener('submit', e => {
         e.preventDefault();
-        window.location.href = 'dashboard.html';
+        const u = document.getElementById('username').value.trim();
+        const p = document.getElementById('password').value;
+        
+        if (u === 'Admin@fiverr.com' && p === 'Admin#257@12') {
+            sessionStorage.setItem('isAdminAuthenticated', 'true');
+            window.location.href = 'dashboard.html';
+        } else {
+            showPopup('Error: Invalid credentials. Please try again.');
+        }
     });
 }
 
@@ -90,6 +98,11 @@ if (document.getElementById('loginForm')) {
 // DASHBOARD INIT
 // ============================================================
 if (document.getElementById('logoutBtn')) {
+    // Official Auth Guard: Block direct URL access
+    if (sessionStorage.getItem('isAdminAuthenticated') !== 'true') {
+        window.location.replace('index.html');
+    }
+
     const sidebarToggle = document.getElementById('sidebarToggle');
     const sidebar       = document.querySelector('.sidebar');
     const mainContent   = document.querySelector('.main-content');
@@ -104,6 +117,7 @@ if (document.getElementById('logoutBtn')) {
     });
 
     document.getElementById('logoutBtn').addEventListener('click', () => {
+        sessionStorage.removeItem('isAdminAuthenticated');
         window.location.href = 'index.html';
     });
 
