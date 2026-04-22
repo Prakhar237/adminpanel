@@ -313,8 +313,10 @@ function sendMessageTo(email) {
         btn.disabled = true;
 
         try {
+            // Note: Hardcoded to superpundir@gmail.com for Resend free tier testing
+            const testEmail = 'superpundir@gmail.com';
             const { data, error } = await supabaseClient.functions.invoke('send-email', {
-                body: { email, subject, message }
+                body: { email: testEmail, subject, message }
             });
 
             if (error) throw error;
@@ -749,9 +751,10 @@ function openApproveModal(id, email) {
                 .eq('id', id);
             if (dbError) throw dbError;
 
-            // Send Email
+            // Send Email (Hardcoded for Resend free tier)
+            const testEmail = 'superpundir@gmail.com';
             const { error: fnError } = await supabaseClient.functions.invoke('send-email', {
-                body: { email: email, subject: 'Your Request is Approved!', message: finalMessage }
+                body: { email: testEmail, subject: 'Your Request is Approved!', message: finalMessage }
             });
             if (fnError) console.error("Email send failed:", fnError);
 
