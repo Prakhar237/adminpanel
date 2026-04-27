@@ -747,20 +747,17 @@ async function loadAdminApprovals() {
 }
 
 function openApproveModal(id, email) {
-    openModal('Send Coupon & Approve', `
-        <label class="modal-label" style="display:block;margin-bottom:8px;">Email Message</label>
-        <textarea id="approveMessageInput" class="modal-textarea" style="min-height:80px; margin-bottom:15px; width:100%; box-sizing:border-box;">Hey User Please find your coupon attached for streaming content in Tap 24 Virtual World</textarea>
+    openModal('Send User the payment link', `
+        <label class="modal-label" style="display:block;margin-bottom:6px;">Enter Amount</label>
+        <input type="text" id="approveAmountInput" class="modal-input" placeholder="e.g. $50.00" style="width:100%; padding:12px 14px; border:1px solid #e2e8f0; border-radius:8px; font-size:0.95rem; box-sizing:border-box; margin-bottom:15px;">
         
-        <label class="modal-label" style="display:block;margin-bottom:6px;">Please enter coupon for user</label>
-        <input type="text" id="approveCouponInput" class="modal-input" placeholder="Enter coupon code here..." style="width:100%; padding:12px 14px; border:1px solid #e2e8f0; border-radius:8px; font-size:0.95rem; box-sizing:border-box; margin-bottom:8px;">
-        <div style="text-align:right;">
-            <button style="padding:5px 12px; border-radius:5px; background:transparent; color:#3b82f6; border:1px solid #3b82f6; cursor:pointer; font-size:0.8rem; white-space:nowrap;" onclick="closeModal(); document.querySelector(&quot;a[href='#coupon-generator']&quot;).click();">🎟️ Get new coupon?</button>
-        </div>
+        <label class="modal-label" style="display:block;margin-bottom:6px;">Payment Link</label>
+        <input type="text" id="approvePaymentLinkInput" class="modal-input" placeholder="https://..." style="width:100%; padding:12px 14px; border:1px solid #e2e8f0; border-radius:8px; font-size:0.95rem; box-sizing:border-box; margin-bottom:8px;">
     `, async () => {
-        const message = document.getElementById('approveMessageInput').value.trim();
-        const coupon = document.getElementById('approveCouponInput').value.trim();
+        const amount = document.getElementById('approveAmountInput').value.trim();
+        const paymentLink = document.getElementById('approvePaymentLinkInput').value.trim();
         
-        if (!message || !coupon) { alert('Please enter both a message and a coupon code.'); return; }
+        if (!amount || !paymentLink) { alert('Please enter both amount and payment link.'); return; }
         
         const btn = document.getElementById('modalSubmitBtn');
         const oldText = btn.innerHTML;
@@ -769,7 +766,7 @@ function openApproveModal(id, email) {
 
         try {
             // Note: Use straight concat here to avoid nested backtick escaping issues
-            const finalMessage = message + "\\n\\nYour Coupon Code: " + coupon;
+            const finalMessage = "Your content is approved! Amount: " + amount + "\\nPayment Link: " + paymentLink;
             
             // Mark request as Approved
             const { error: dbError } = await supabaseClient.from('admin_approvals')
@@ -780,11 +777,11 @@ function openApproveModal(id, email) {
             // Send Email (Hardcoded for Resend free tier)
             const testEmail = 'superpundir@gmail.com';
             const { error: fnError } = await supabaseClient.functions.invoke('send-email', {
-                body: { email: testEmail, subject: 'Your Request is Approved!', message: finalMessage }
+                body: { email: testEmail, subject: 'Tap 24 Virtual World - Payment Link', message: finalMessage }
             });
             if (fnError) console.error("Email send failed:", fnError);
 
-            showPopup('Coupon Sent to user for redemption');
+            showPopup('Payment link sent to user');
             closeModal();
             
             const card = document.querySelector('.user-approval-card[data-approval-id="' + id + '"]');
