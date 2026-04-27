@@ -9,6 +9,29 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 const supabaseClient   = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 // ============================================================
+// HELPERS
+// ============================================================
+function formatDuration(value) {
+    if (value === undefined || value === null || value === '') return '';
+    if (String(value).includes(':')) return value;
+
+    let totalSeconds = parseInt(value, 10);
+    if (isNaN(totalSeconds)) return value;
+
+    const days = Math.floor(totalSeconds / 86400);
+    const hours = Math.floor((totalSeconds % 86400) / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+    const seconds = totalSeconds % 60;
+
+    const pad = (num) => num.toString().padStart(2, '0');
+
+    let result = '';
+    if (days > 0) result += `${days} Day${days > 1 ? 's' : ''} `;
+    result += `${pad(hours)}:${pad(minutes)}:${pad(seconds)}`;
+    return result;
+}
+
+// ============================================================
 // MODAL SYSTEM
 // ============================================================
 let _modalSubmitCallback = null;
@@ -452,8 +475,7 @@ function renderReportCard(container, report) {
                 <span class="user-id-highlight">${report.user_email || report.reported_by_email || '—'}</span>
                 <span class="floor-info">Floor: <strong>${report.user_floor}</strong></span>
                 <span class="spots-info">Spots: ${spots}</span>
-                ${report.media_timestamp ? `<span class="floor-info">Timestamp: <strong>${report.media_timestamp}</strong></span>` : ''}
-                ${report.media_duration ? `<span class="floor-info">Duration: <strong>${report.media_duration}</strong></span>` : ''}
+                ${report.media_duration ? `<span class="floor-info">Duration: <strong>${formatDuration(report.media_duration)}</strong></span>` : ''}
             </div>
             <button class="minimize-btn" onclick="toggleMinimize(this)">
                 <i class="fas fa-chevron-up"></i>
@@ -693,8 +715,7 @@ async function loadAdminApprovals() {
                 <span class="approval-meta">Country: <strong>${userCountry}</strong></span>
                 <span class="approval-meta">Spot: <strong>${(item.spot_numbers && item.spot_numbers.length > 0) ? item.spot_numbers[0] : 'N/A'}</strong></span>
                 <span class="approval-meta">Submitted: ${new Date(item.submitted_at).toLocaleString()}</span>
-                ${item.media_timestamp ? `<span class="approval-meta">Timestamp: <strong>${item.media_timestamp}</strong></span>` : ''}
-                ${item.media_duration ? `<span class="approval-meta">Duration: <strong>${item.media_duration}</strong></span>` : ''}
+                ${item.media_duration ? `<span class="approval-meta">Duration: <strong>${formatDuration(item.media_duration)}</strong></span>` : ''}
                 <button class="minimize-btn" onclick="toggleMinimize(this)">
                     <i class="fas fa-chevron-up"></i>
                 </button>
