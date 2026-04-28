@@ -713,6 +713,7 @@ async function loadAdminApprovals() {
                 <span class="status-icon"></span>
                 <span class="approval-email">${item.user_mail}</span>
                 <span class="approval-meta">Country: <strong>${userCountry}</strong></span>
+                <span class="approval-meta">Floor: <strong>${item.user_floor || 'N/A'}</strong></span>
                 <span class="approval-meta">Spot: <strong>${(item.spot_numbers && item.spot_numbers.length > 0) ? item.spot_numbers[0] : 'N/A'}</strong></span>
                 <span class="approval-meta">Submitted: ${new Date(item.submitted_at).toLocaleString()}</span>
                 ${item.media_duration ? `<span class="approval-meta">Duration: <strong>${formatDuration(item.media_duration)}</strong></span>` : ''}
